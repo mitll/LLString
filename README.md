@@ -2,12 +2,10 @@
 
 This project contains the source for basic string matching in support of XDATA. 
 
-    MIT-LL String Matcher Class:
-
-     Basic String Matching Techniques:
-       - Levenshtein Distance
-       - Jaro-Winkler 
-       - Soft TF-IDF
+Basic String Matching Techniques:
+    - Levenshtein Distance
+    - Jaro-Winkler 
+    - Soft TF-IDF
 
 This repo is intended to hold source only. Any raw data (or derived data products) must be stored locally.
 
