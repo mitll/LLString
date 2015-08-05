@@ -70,7 +70,7 @@ class Softtfidf():
     logger = logging.getLogger(__name__)
 
 
-    THRESHOLD = 0.9
+    THRESHOLD = 0.5
     CORPUS = []
 
 
@@ -106,7 +106,7 @@ class Softtfidf():
             for j,tj in enumerate(t.split(" ")):
                 dist = jf.jaro_winkler(ti,tj)
                 if dist >= self.THRESHOLD:
-                    similarity.append(similar(i,j,dist*tfidfdict.get(ti)* tfidfdict.get(tj)))
+                    similarity.append(similar(i,j,dist*tfidfdict.get(ti)*tfidfdict.get(tj)))
 
         similarity.sort(reverse=True,key=lambda x:x.sim)
 

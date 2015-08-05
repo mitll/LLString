@@ -27,7 +27,7 @@ The code to compute string match scores for an example string pair (i.e. `ALI SH
 Fri, 28 Aug 2015 10:05:55 INFO     Entity-Match Test:
 Fri, 28 Aug 2015 10:05:55 INFO     0.72619047619
 Fri, 28 Aug 2015 10:05:55 INFO     0.842063492063
-Fri, 28 Aug 2015 10:05:55 INFO     0.201993092498
+Fri, 28 Aug 2015 10:05:55 INFO     0.81094836358
 ```
 
 ### License
