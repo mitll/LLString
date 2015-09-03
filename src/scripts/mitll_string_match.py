@@ -71,71 +71,30 @@ class MITLLStringMatcher:
         """
 
 
-    def levenshtein_similarity(self,s,t,agg):
+    def levenshtein_similarity(self,s,t):
         """
-        Levenshtein Similarity:
-
-        If multi-word string, for each word in s1, we find best matching
-        word in s2; we then use the value of "agg" (e.g. "avg" or "max")
-        to get a final aggregate score for the two strings
-
-        More often than not, "avg" is likely the most appropriate aggregator.
+        Levenshtein Similarity 
         """
         
-        su_split = unicode(s.lower(),"utf-8").split(); tu_split = unicode(t.lower(),"utf-8").split();
+        su_split = unicode(s.lower(),"utf-8").split(); ss = "_".join(su_split);
+        tu_split = unicode(t.lower(),"utf-8").split(); tt = "_".join(tu_split);
 
-        sims = list()
+        Ns = len(ss); Nt = len(tt);
 
-        for su in su_split:
-            Ns = len(su)
-            max_sim = 0.0
-            
-            for tu in tu_split:
-                Nt = len(tu)
-                norm_lv = 1.0 - (jellyfish.levenshtein_distance(su,tu))/float(max(Ns,Nt))
-                if norm_lv > max_sim:
-                    max_sim = norm_lv
-            
-            sims.append(max_sim)
-
-        if agg == "max":
-            lev_sim = float(max(sims))
-        else: # if not max, always do avg
-            lev_sim = np.mean(sims)
+        lev_sim = 1.0 - (jellyfish.levenshtein_distance(ss,tt))/float(max(Ns,Nt))
 
         return lev_sim
 
 
-    def jaro_winkler_similarity(self,s,t,agg):
+    def jaro_winkler_similarity(self,s,t):
         """
-        Jaro-Winkler Similarity:
-
-        If multi-word string, for each word in s1, we find best matching
-        word in s2; we then use the value of "agg" (e.g. "avg" or "max")
-        to get a final aggregate score for the two strings
-
-        More often than not, "avg" is likely the most appropriate aggregator.
+        Jaro-Winkler Similarity
         """
         
-        su_split = unicode(s.lower(),"utf-8").split(); tu_split = unicode(t.lower(),"utf-8").split();
+        su_split = unicode(s.lower(),"utf-8").split(); ss = "_".join(su_split);
+        tu_split = unicode(t.lower(),"utf-8").split(); tt = "_".join(tu_split);
 
-        sims = list()
-
-        for su in su_split:
-            max_sim = 0.0
-            
-            for tu in tu_split:
-                jw = jellyfish.jaro_winkler(su,tu)
-                if jw > max_sim:
-                    max_sim = jw
-            
-            sims.append(max_sim)
-
-
-        if agg == "max":
-            jw_sim = float(max(sims))
-        else: # if not max, always do avg
-            jw_sim = np.mean(sims)
+        jw_sim = jellyfish.jaro_winkler(ss,tt)
 
         return jw_sim
 
@@ -152,7 +111,13 @@ class MITLLStringMatcher:
         
         stf = softtfidf.Softtfidf()
         stf.CORPUS.append(s); stf.CORPUS.append(t)
-        tfidf_sim = stf.score(s,t)
+        tfidf_sim1 = stf.score(s,t)
+
+        stf2 = softtfidf.Softtfidf()
+        stf2.CORPUS.append(t); stf2.CORPUS.append(s)
+        tfidf_sim2 = stf2.score(t,s)
+
+        tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim2)
 
         return tfidf_sim
 
@@ -166,9 +131,9 @@ class MITLLStringMatcher:
         s = "ALI SHAHEED MOHAMMED"
         t = "ALI SAJID MUHAMMAD"
 
-        self.logger.info(self.levenshtein_similarity(s, t, "avg"))
-        self.logger.info(self.jaro_winkler_similarity(s, t, "avg"))
-        self.logger.info(self.soft_tfidf_similarity(s,t))
+        self.logger.info("Levenshtein: {0}".format(self.levenshtein_similarity(s,t)))
+        self.logger.info("Jaro-Winkler: {0}".format(self.jaro_winkler_similarity(s,t)))
+        self.logger.info("Soft-TFIDF: {0}".format(self.soft_tfidf_similarity(s,t)))
         
 
 

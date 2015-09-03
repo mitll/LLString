@@ -36,7 +36,7 @@ from  sklearn.feature_extraction.text import TfidfVectorizer
 import jellyfish as jf
 
 
-class Softtfidf():
+class Softtfidf:
     """
     This module implements the soft tf-idf algorithm described in paper
 
@@ -69,13 +69,11 @@ class Softtfidf():
                                                     datefmt='%a, %d %b %Y %H:%M:%S')
     logger = logging.getLogger(__name__)
 
-
     THRESHOLD = 0.5
-    CORPUS = []
-
 
     def __init__(self):
         self.tfidfvector = TfidfVectorizer(min_df=0, norm='l2', tokenizer=lambda x:x.split(" "))
+        self.CORPUS = []
 
     def buildcorpus(self):
         '''
