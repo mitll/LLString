@@ -32,6 +32,8 @@ import os
 from collections import namedtuple
 import logging
 import numpy as np
+from  sklearn.feature_extraction.text import CountVectorizer
+from  sklearn.feature_extraction.text import TfidfTransformer
 from  sklearn.feature_extraction.text import TfidfVectorizer
 import jellyfish as jf
 
@@ -69,7 +71,22 @@ class Softtfidf:
                                                     datefmt='%a, %d %b %Y %H:%M:%S')
     logger = logging.getLogger(__name__)
 
-    THRESHOLD = 0.5
+    THRESHOLD = 0.6
+
+    def compute_idf(self):
+        '''
+        Scratch
+        '''
+        cv = CountVectorizer(min_df = 0.0)
+        cv.fit_transform(self.CORPUS)
+        self.logger.debug(cv.vocabulary_)
+        freq_term_matrix = cv.transform(self.CORPUS)
+        tfidf = TfidfTransformer(norm="l2")
+        tfidf.fit(freq_term_matrix)
+        log_idf = tfidf.idf_
+        self.LOG_IDF = log_idf
+        self.CORPUS_VOCAB = cv.vocabulary_
+        
 
     def __init__(self):
         self.tfidfvector = TfidfVectorizer(min_df=0, norm='l2', tokenizer=lambda x:x.split(" "))
@@ -92,6 +109,64 @@ class Softtfidf:
             for word in doc.split(" "):
                 tfidfdict[word]=matrix[(docId,vocabulary[word])]
         return tfidfdict
+
+    def compute_VwS(self,s):
+        '''
+        Compute V(w,S) as defined by Cohen et al.'s IJCAI03 paper
+        '''
+        # Get term-frequency vectors and vocab list for string
+        cv = CountVectorizer(min_df = 0.0)
+        tf = cv.fit_transform([s,s]); tf = tf.tocsr(); tf = tf[0,:]
+        vocab = cv.vocabulary_
+
+        # Compute V(w,S) for string
+        vprime_ws = dict()
+        vprime_ws_norm = 0
+        for w in vocab:
+            vprime_ws[w] = np.log(tf[0,vocab[w]]+1)*self.LOG_IDF[self.CORPUS_VOCAB[w]]
+            vprime_ws_norm += vprime_ws[w]**2
+        vprime_ws_norm = np.sqrt(vprime_ws_norm)
+
+        return (vocab,vprime_ws,vprime_ws_norm)
+
+
+    def score_new(self,s,t):
+        '''
+        Returns the similarity score
+        '''
+        
+        # Get V(w,S) and V(w,T) (along with vocab lists for s and t) 
+        (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
+        (t_vocab,vprime_wt,vprime_wt_norm) = self.compute_VwS(t)
+
+        #compute D(w,T) for all w
+        max_vT = dict()
+        jw_sims = dict()
+        for w in s_vocab:
+            max_vT[w] = dict(); max_vT[w]['score'] = 0.0; max_vT[w]['max_v'] = '';
+            jw_sims[w] = dict()
+            for v in t_vocab:
+                dist = jf.jaro_winkler(w,v)
+                jw_sims[w][v] = dist
+                if (dist >= max_vT[w]['score']):
+                    max_vT[w]['score'] = dist
+                    max_vT[w]['max_v'] = v
+        self.logger.debug("max_vT: {0}".format(max_vT))
+
+        # compute soft tf-idf sim
+        sim = 0.0
+        for w in s_vocab:
+            for v in t_vocab:
+                self.logger.debug("(w,v,dist): ({0},{1},{2})".format(w,v,dist))
+                if (jw_sims[w][v] >= self.THRESHOLD):
+                    inner_sum = (vprime_ws[w]/vprime_ws_norm)*(vprime_wt[max_vT[w]['max_v']]/vprime_wt_norm)*max_vT[w]['score']
+                    sim += inner_sum
+                    break
+
+        self.logger.debug("Soft TF-IDF Similarity: {0}".format(sim))
+
+        return sim
+
 
     def score(self,s,t):
         '''
@@ -122,14 +197,14 @@ class Softtfidf:
         return sim  
 
 
-def main():
-    """ Driver program """
-    s=Softtfidf()
-    document1 = u'apoclapse now'
-    document2 = u'apocalypse now'
-    s.CORPUS.append(document1)
-    s.CORPUS.append(document2)
-    s.logger.info(s.score(document1,document2))
+    def main():
+        """ Driver program """
+        s=Softtfidf()
+        document1 = u'apoclapse now'
+        document2 = u'apocalypse now'
+        s.CORPUS.append(document1)
+        s.CORPUS.append(document2)
+        s.logger.info(s.score(document1,document2))
 
 
 

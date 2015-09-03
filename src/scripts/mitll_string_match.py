@@ -112,12 +112,22 @@ class MITLLStringMatcher:
         stf = softtfidf.Softtfidf()
         stf.CORPUS.append(s); stf.CORPUS.append(t)
         tfidf_sim1 = stf.score(s,t)
+        stf.compute_idf()
+        tfidf_sim2 = stf.score_new(s,t)
+        self.logger.info("Old Sim - (s,t): {0}".format(tfidf_sim1))
+        self.logger.info("New Sim - (s,t): {0}".format(tfidf_sim2))
 
+        self.logger.info("===============================================")
         stf2 = softtfidf.Softtfidf()
         stf2.CORPUS.append(t); stf2.CORPUS.append(s)
-        tfidf_sim2 = stf2.score(t,s)
+        tfidf_sim3 = stf2.score(t,s)
+        stf2.compute_idf()
+        tfidf_sim4 = stf2.score_new(t,s)
 
-        tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim2)
+        self.logger.info("Old Sim - (t,s): {0}".format(tfidf_sim3))
+        self.logger.info("New Sim - (t,s): {0}".format(tfidf_sim4))
+
+        tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim3)
 
         return tfidf_sim
 
