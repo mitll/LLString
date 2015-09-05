@@ -34,6 +34,8 @@ import numpy as np
 import jellyfish
 import softtfidf
 
+import utilities.text_tools as tt
+
 
 class MITLLStringMatcher:
     """
@@ -69,6 +71,7 @@ class MITLLStringMatcher:
         """
         Constructor
         """
+        self.normalizer = tt.MITLLTextNormalizer()
 
 
     def levenshtein_similarity(self,s,t):
@@ -106,7 +109,8 @@ class MITLLStringMatcher:
         This similarity measure is only meaningful when you have multi-word strings. 
         For single words, this measure will return 0.0
         """
-
+        
+        
         s = unicode(s.lower(),"utf-8"); t = unicode(t.lower(),"utf-8")
         
         stf = softtfidf.Softtfidf()
