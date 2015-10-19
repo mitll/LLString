@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-# english_normalization.py
+# latin_normalization.py
 #
-# Text Normalization Routines for English Text (including for Twitter data)
+# Text Normalization Routines for Latin Script Text (including for Twitter data)
 # 
 # Copyright 2013-2015 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
@@ -27,9 +27,9 @@ import logging
 
 from text_normalization import MITLLTextNormalizer
 
-class MITLLEnglishNormalizer(MITLLTextNormalizer): 
+class MITLLLatinNormalizer(MITLLLatinNormalizer): 
     '''
-    Text-Normalization Routines for English
+    Text-Normalization Routines for Latin Script Text
     '''
 
     # Logging
