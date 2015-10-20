@@ -34,7 +34,7 @@ import numpy as np
 import jellyfish
 import softtfidf
 
-import utilities.text_tools as tt
+import utilities.text_normalization as tt
 
 
 class MITLLStringMatcher:
@@ -74,13 +74,29 @@ class MITLLStringMatcher:
         self.normalizer = tt.MITLLTextNormalizer()
 
 
+    def clean_string(self,s):
+        """
+        Strip leading characters, lower 
+        """
+
+        if isinstance(s,unicode):
+            ss = s.lower()
+        else:
+            ss = unicode(s.lower(),"utf-8")
+
+        if len(ss) == 0:
+            ss = u''
+
+        return ss
+
+
     def levenshtein_similarity(self,s,t):
         """
         Levenshtein Similarity 
         """
         
-        su_split = unicode(s.lower(),"utf-8").split(); ss = "_".join(su_split);
-        tu_split = unicode(t.lower(),"utf-8").split(); tt = "_".join(tu_split);
+        ss = self.clean_string(s)
+        tt = self.clean_string(t)
 
         Ns = len(ss); Nt = len(tt);
 
@@ -94,8 +110,8 @@ class MITLLStringMatcher:
         Jaro-Winkler Similarity
         """
         
-        su_split = unicode(s.lower(),"utf-8").split(); ss = "_".join(su_split);
-        tu_split = unicode(t.lower(),"utf-8").split(); tt = "_".join(tu_split);
+        ss = self.clean_string(s)
+        tt = self.clean_string(t)
 
         jw_sim = jellyfish.jaro_winkler(ss,tt)
 
@@ -110,28 +126,18 @@ class MITLLStringMatcher:
         For single words, this measure will return 0.0
         """
         
-        
-        s = unicode(s.lower(),"utf-8"); t = unicode(t.lower(),"utf-8")
+        ss = self.clean_string(s)
+        tt = self.clean_string(t)
         
         stf = softtfidf.Softtfidf()
-        stf.CORPUS.append(s); stf.CORPUS.append(t)
-        tfidf_sim1 = stf.score(s,t)
-        stf.compute_idf()
-        tfidf_sim2 = stf.score_new(s,t)
-        self.logger.info("Old Sim - (s,t): {0}".format(tfidf_sim1))
-        self.logger.info("New Sim - (s,t): {0}".format(tfidf_sim2))
+        stf.CORPUS.append(ss); stf.CORPUS.append(tt)
+        tfidf_sim1 = stf.score(ss,tt)
 
-        self.logger.info("===============================================")
         stf2 = softtfidf.Softtfidf()
-        stf2.CORPUS.append(t); stf2.CORPUS.append(s)
-        tfidf_sim3 = stf2.score(t,s)
-        stf2.compute_idf()
-        tfidf_sim4 = stf2.score_new(t,s)
+        stf2.CORPUS.append(tt); stf2.CORPUS.append(ss)
+        tfidf_sim2 = stf2.score(tt,ss)
 
-        self.logger.info("Old Sim - (t,s): {0}".format(tfidf_sim3))
-        self.logger.info("New Sim - (t,s): {0}".format(tfidf_sim4))
-
-        tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim3)
+        tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim2)
 
         return tfidf_sim
 
