@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# mitll_string_match.py
+# mitll_string_matcher.py
 #
 # Basic String Matching Techniques:
 #   - Levenshtein Distance
