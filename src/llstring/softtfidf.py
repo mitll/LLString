@@ -26,43 +26,25 @@
 # limitations under the License.
 
 
-
 #Imports
 import os
 from collections import namedtuple
 import logging
-import numpy as np
+import math
+
 from  sklearn.feature_extraction.text import CountVectorizer
 from  sklearn.feature_extraction.text import TfidfTransformer
 from  sklearn.feature_extraction.text import TfidfVectorizer
+
 import jellyfish as jf
 
 
 class Softtfidf:
     """
-    This module implements the soft tf-idf algorithm described in paper
-
-
-    This algorithm is best suited for record matching where the record is generally
-    smaller compared to document
-
-    Steps:
-        1. Compute the tf.idf score of document corpus
-        2. Score method return the soft tf-idf of the query against the record in the
-        corpus
+    This module implements the soft tf-idf algorithm described in:
+        A Comparison of String Distance Metrics for Name-Matching Tasks
+        Cohen et al., IJCAI 2003
     """
-
-    # get projectdir following project dir conventions...
-    projectdir = os.path.realpath(__file__).split('src')[0]
-
-    # projectname via project dir conventions...
-    projectname = projectdir.split(os.sep)[-2:-1][0]
-
-    #current package name (i.e. containing directory name)
-    pkgname = os.path.realpath(__file__).split(os.sep)[-2]
-
-    #class name
-    classname = __name__
 
     # Logging
     LOG_LEVEL = logging.INFO
@@ -71,44 +53,28 @@ class Softtfidf:
                                                     datefmt='%a, %d %b %Y %H:%M:%S')
     logger = logging.getLogger(__name__)
 
-    THRESHOLD = 0.6
 
-    def compute_idf(self):
+    def __init__(self,idf_model=None,threshold=0.6):
         '''
-        Scratch
+        Constructor 
         '''
-        cv = CountVectorizer(min_df = 0.0)
-        cv.fit_transform(self.CORPUS)
-        self.logger.debug(cv.vocabulary_)
-        freq_term_matrix = cv.transform(self.CORPUS)
-        tfidf = TfidfTransformer(norm="l2")
-        tfidf.fit(freq_term_matrix)
-        log_idf = tfidf.idf_
-        self.LOG_IDF = log_idf
-        self.CORPUS_VOCAB = cv.vocabulary_
-        
 
-    def __init__(self):
-        self.tfidfvector = TfidfVectorizer(min_df=0, norm='l2', tokenizer=lambda x:x.split(" "))
-        self.CORPUS = []
+        # Set (or compute) IDF and corresponding vocabulary
+        if idf_model is not None:
+            self.LOG_IDF = idf_model['idf']
+            self.CORPUS_VOCAB = idf_model['corpus_vocab']
+            self.OOV_IDF_VAL = idf_model['oov_idf_val']
+        else:
+            self.logger.info("Either (or both) IDF or corpus vocabulary parameters not given. 
+                                Defaulting to corpus formed by input strings");
+            self.CORPUS.append(s)
+            self.CORPUS.append(t)
 
-    def buildcorpus(self):
-        '''
-        Returns sparse vector of tfidf score
-        '''
-        return self.tfidfvector.fit_transform(self.CORPUS)
+            self.compute_query_idf()
 
-    def builddict(self):
-        '''
-        Returns dictionary of words as key and tfidf score as value
-        '''
-        matrix = self.buildcorpus()
-        vocabulary = self.tfidfvector.vocabulary_
-        tfidfdict ={}
-        for docId,doc in enumerate(self.CORPUS):
-            for word in doc.split(" "):
-                tfidfdict[word]=matrix[(docId,vocabulary[word])]
-        return tfidfdict
+        # Set threshold
+        self.THRESHOLD = threshold
+            
 
     def compute_VwS(self,s):
         '''
@@ -123,18 +89,21 @@ class Softtfidf:
         vprime_ws = dict()
         vprime_ws_norm = 0
         for w in vocab:
-            vprime_ws[w] = np.log(tf[0,vocab[w]]+1)*self.LOG_IDF[self.CORPUS_VOCAB[w]]
+            if w in self.CORPUS_VOCAB:
+                vprime_ws[w] = math.log(tf[0,vocab[w]]+1)*self.LOG_IDF[self.CORPUS_VOCAB[w]]
+            else:
+                vprime_ws[w] = math.log(tf[0,vocab[w]]+1)*self.OOV_IDF_VAL #if not in vocab, defauly to OOC_IDF_VAL
             vprime_ws_norm += vprime_ws[w]**2
-        vprime_ws_norm = np.sqrt(vprime_ws_norm)
+        vprime_ws_norm = math.sqrt(vprime_ws_norm)
 
         return (vocab,vprime_ws,vprime_ws_norm)
 
 
-    def score_new(self,s,t):
+    def score(self,s,t):
         '''
-        Returns the similarity score
+        Returns the soft tf-idf similarity
         '''
-        
+
         # Get V(w,S) and V(w,T) (along with vocab lists for s and t) 
         (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
         (t_vocab,vprime_wt,vprime_wt_norm) = self.compute_VwS(t)
@@ -168,46 +137,17 @@ class Softtfidf:
         return sim
 
 
-    def score(self,s,t):
+    def compute_query_idf(self):
         '''
-        Returns the similarity score
+        Compute IDF from s and t in case you have no externally computed IDF to use 
         '''
-        similar = namedtuple('Similar',['r1','r2','sim'])
-        similarity=[]
-        tfidfdict = self.builddict()
-        for i,ti in enumerate(s.split(" ")):
-            for j,tj in enumerate(t.split(" ")):
-                dist = jf.jaro_winkler(ti,tj)
-                if dist >= self.THRESHOLD:
-                    similarity.append(similar(i,j,dist*tfidfdict.get(ti)*tfidfdict.get(tj)))
-
-        similarity.sort(reverse=True,key=lambda x:x.sim)
-
-        sused = np.array([False]*len(s),dtype=bool)
-        tused = np.array([False]*len(t),dtype=bool)
-
-        #check that the term are counted only once
-        sim = 0.0
-        for s in similarity:
-            if(sused[s.r1] | tused[s.r2]):
-                continue;
-            sim+=s.sim
-            sused[s.r1] = True
-            tused[s.r2] = True
-        return sim  
-
-
-    def main():
-        """ Driver program """
-        s=Softtfidf()
-        document1 = u'apoclapse now'
-        document2 = u'apocalypse now'
-        s.CORPUS.append(document1)
-        s.CORPUS.append(document2)
-        s.logger.info(s.score(document1,document2))
-
-
-
-if __name__ == '__main__':
-    main()
+        cv = CountVectorizer(min_df = 0.0)
+        cv.fit_transform(self.CORPUS)
+        self.logger.debug(cv.vocabulary_)
+        freq_term_matrix = cv.transform(self.CORPUS)
+        tfidf = TfidfTransformer(norm="l2")
+        tfidf.fit(freq_term_matrix)
+        log_idf = tfidf.idf_
+        self.LOG_IDF = log_idf
+        self.CORPUS_VOCAB = cv.vocabulary_
 

@@ -25,7 +25,7 @@
 import random
 import logging
 
-class ReservoirSampler(): 
+class ReservoirSampler: 
     '''
     Class to perform uniform sampling from an input stream
     '''
@@ -51,7 +51,7 @@ class ReservoirSampler():
         '''
         Update sampler
         '''
-        N += 1
+        self.N += 1
         
         if len(self.sample) < self.K:
             self.sample.append(item)

@@ -32,9 +32,9 @@ import logging
 import numpy as np
 
 import jellyfish
-import softtfidf
 
-import utilities.text_normalization as tt
+from . import softtfidf
+from .utilities.normalization import text_normalization as tt
 
 
 class MITLLStringMatcher:

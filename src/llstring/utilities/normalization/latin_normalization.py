@@ -25,9 +25,9 @@
 import re
 import logging
 
-from text_normalization import MITLLTextNormalizer
+from .text_normalization import MITLLTextNormalizer
 
-class MITLLLatinNormalizer(MITLLLatinNormalizer): 
+class MITLLLatinNormalizer(MITLLTextNormalizer): 
     '''
     Text-Normalization Routines for Latin Script Text
     '''
@@ -87,6 +87,7 @@ class MITLLLatinNormalizer(MITLLLatinNormalizer):
 
     def normalize(self,ln):
         # Various normalization routines -- pick and choose as needed
+        ln = self.normalize_unicode_composed(ln) #from base-class
         ln = self.convertUTF8_to_ascii(ln)
         ln = self.remove_twitter_meta(ln)
         ln = self.remove_nonsentential_punctuation(ln)

@@ -48,7 +48,7 @@ class MITLLTextNormalizer:
 
     def normalize_unicode_composed(self,txt):
         '''
-        Normalize unicode: Decomposed (i.e. expanded unicode)
+        Normalize unicode: Composed
         '''
         return unicodedata.normalize('NFKC', txt)
 
