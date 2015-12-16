@@ -92,90 +92,114 @@ def sample_from_tgz(fnamein,N):
 
 if __name__ == "__main__":
 
+    DO_SAMPLE_TEST = False
+    DO_IDF_TEST = True 
+    
+    #
+    # Dataset Sampling Tests
+    #
     #
     # Setup directories and files
     # 
-    fnamein_table = 'table_profiles.tsv.gz'
 
     ## Input/Output directories
     twitter_table_indir = os.path.join(projectdir,'data/input/match_data_wmc/twitter/boston/tables')
     instagram_table_indir = os.path.join(projectdir,'data/input/match_data_wmc/instagram/boston/tables')
     outdir = os.path.join(projectdir,'data/output/models')
 
+    # Fullname sample filename
+    fname_idf_train = os.path.join(outdir,"idf_training_data.txt")
+
     # Normalizer
     normer = latin_normalization.MITLLLatinNormalizer()
 
-    fnamein = os.path.join(twitter_table_indir,fnamein_table)
-    N = 25000
-    tw_fullname_sample = sample_from_tgz(fnamein,N)
-    logger.info(tw_fullname_sample[0:100])
-    logger.info("")
+    # Samples
+    sample_fullname = None
 
-    fnamein = os.path.join(instagram_table_indir,fnamein_table)
-    N = 25000
-    inst_fullname_sample = sample_from_tgz(fnamein,N)
-    logger.info(inst_fullname_sample[0:100])
 
-    #
-    # Write sample out to file
-    #
-    fnameout = os.path.join(outdir,"idf_training_data.txt")
-    sample_fullname = tw_fullname_sample+inst_fullname_sample
+    if DO_SAMPLE_TEST:
+        fnamein_table = 'table_profiles.tsv.gz'
 
-    fw = open(fnameout,"w")
-    for fullname in sample_fullname:
-        fw.write(fullname+"\n")
-    fw.close()
+        fnamein = os.path.join(twitter_table_indir,fnamein_table)
+        N = 25000
+        tw_fullname_sample = sample_from_tgz(fnamein,N)
+        logger.info(tw_fullname_sample[0:100])
+        logger.info("")
 
-    #
-    # Train to get IDF
-    #
-    idft = idf_trainer.IDFTrainer()
-    idft.compute_idf(open(fnameout,"r"))
+        fnamein = os.path.join(instagram_table_indir,fnamein_table)
+        N = 25000
+        inst_fullname_sample = sample_from_tgz(fnamein,N)
+        logger.info(inst_fullname_sample[0:100])
+
+        sample_fullname = tw_fullname_sample+inst_fullname_sample
+
+        fw = open(fname_idf_train,"w")
+        for fullname in sample_fullname:
+            fw.write(fullname+"\n")
+        fw.close()
 
     #
-    # Sniff tests (note: anecdotally, high IDF corresponds to unames being used as fullnames)  
+    # IDF training tests
     #
-    index2name = dict()
-    for name in idft.CORPUS_VOCAB.keys():
-        index2name[idft.CORPUS_VOCAB[name]] = name
+    if DO_IDF_TEST:
+        # Assuming fname_idf_train file exists (i.e. we've already obtained a sample)
+        if not sample_fullname:
+            #load names from file
+            sample_fullname = list()
+            fo = open(fname_idf_train,"r")
+            for line in fo:
+                sample_fullname.append(line.rstrip())
+            fo.close()
 
-    low_idf_inds = np.argsort(idft.LOG_IDF)
-    for i in range(0,50):
-        logger.info("{0},{1}".format(index2name[low_idf_inds[i]],idft.LOG_IDF[low_idf_inds[i]]))
+        #
+        # Train to get IDF (from file handle)
+        #
+        idft = idf_trainer.IDFTrainer()
+        idft.compute_idf(open(fname_idf_train,"r"))
 
-    logger.info("")
+        #
+        # Sniff tests (note: anecdotally, high IDF corresponds to unames being used as fullnames)  
+        #
+        index2name = dict()
+        for name in idft.CORPUS_VOCAB.keys():
+            index2name[idft.CORPUS_VOCAB[name]] = name
 
-    high_idf_inds = np.argsort(-idft.LOG_IDF)
-    for i in range(0,50):
-        logger.info("{0},{1}".format(index2name[high_idf_inds[i]],idft.LOG_IDF[high_idf_inds[i]]))
+        low_idf_inds = np.argsort(idft.LOG_IDF)
+        for i in range(0,50):
+            logger.info("{0},{1}".format(index2name[low_idf_inds[i]],idft.LOG_IDF[low_idf_inds[i]]))
 
-    logger.info("")
+        logger.info("")
 
-    #
-    # Train to get IDF
-    #
-    sample_fullname2 = list()
-    sample_fullname2 = sample_fullname
-        
-    idft = idf_trainer.IDFTrainer()
-    idft.compute_idf(sample_fullname2)
+        high_idf_inds = np.argsort(-idft.LOG_IDF)
+        for i in range(0,50):
+            logger.info("{0},{1}".format(index2name[high_idf_inds[i]],idft.LOG_IDF[high_idf_inds[i]]))
 
-    #
-    # Sniff tests (note: anecdotally, high IDF corresponds to unames being used as fullnames)  
-    #
-    index2name = dict()
-    for name in idft.CORPUS_VOCAB.keys():
-        index2name[idft.CORPUS_VOCAB[name]] = name
+        logger.info("")
 
-    low_idf_inds = np.argsort(idft.LOG_IDF)
-    for i in range(0,50):
-        logger.info("{0},{1}".format(index2name[low_idf_inds[i]],idft.LOG_IDF[low_idf_inds[i]]))
+        #
+        # Train to get IDF (from list)
+        #
+        sample_fullname2 = list()
+        sample_fullname2 = sample_fullname
+            
+        idft = idf_trainer.IDFTrainer()
+        idft.compute_idf(sample_fullname2)
 
-    logger.info("")
+        #
+        # Sniff tests (note: anecdotally, high IDF corresponds to unames being used as fullnames)  
+        #
+        index2name = dict()
+        for name in idft.CORPUS_VOCAB.keys():
+            index2name[idft.CORPUS_VOCAB[name]] = name
 
-    high_idf_inds = np.argsort(-idft.LOG_IDF)
-    for i in range(0,50):
-        logger.info("{0},{1}".format(index2name[high_idf_inds[i]],idft.LOG_IDF[high_idf_inds[i]]))
+        low_idf_inds = np.argsort(idft.LOG_IDF)
+        for i in range(0,50):
+            logger.info("{0},{1}".format(index2name[low_idf_inds[i]],idft.LOG_IDF[low_idf_inds[i]]))
 
-    logger.info(len(idft.LOG_IDF))
+        logger.info("")
+
+        high_idf_inds = np.argsort(-idft.LOG_IDF)
+        for i in range(0,50):
+            logger.info("{0},{1}".format(index2name[high_idf_inds[i]],idft.LOG_IDF[high_idf_inds[i]]))
+
+        logger.info(len(idft.LOG_IDF))

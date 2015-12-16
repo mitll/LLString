@@ -78,6 +78,7 @@ class IDFTrainer:
         self.tfidf.fit(freq_term_matrix)
 
         self.LOG_IDF = self.tfidf.idf_
+        self.N = freq_term_matrix.shape[0] #num of "docs" processed
         
         if isinstance(corpus,file):
             corpus.close()

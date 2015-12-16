@@ -54,27 +54,31 @@ class Softtfidf:
     logger = logging.getLogger(__name__)
 
 
-    def __init__(self,idf_model=None,threshold=0.6):
+    def __init__(self):
         '''
         Constructor 
         '''
+        self.LOG_IDF = None
+        self.CORPUS_VOCAB = None
+        self.OOV_IDF_VAL = None
 
+
+    def set_model(self,idf_model):
+        '''
+        Set softtfidf matcher's model parameters
+        '''
         # Set (or compute) IDF and corresponding vocabulary
-        if idf_model is not None:
-            self.LOG_IDF = idf_model['idf']
-            self.CORPUS_VOCAB = idf_model['corpus_vocab']
-            self.OOV_IDF_VAL = idf_model['oov_idf_val']
-        else:
-            self.logger.info("Either (or both) IDF or corpus vocabulary parameters not given. 
-                                Defaulting to corpus formed by input strings");
-            self.CORPUS.append(s)
-            self.CORPUS.append(t)
+        self.LOG_IDF = idf_model['idf']
+        self.CORPUS_VOCAB = idf_model['corpus_vocab']
+        self.OOV_IDF_VAL = idf_model['oov_idf_val']
 
-            self.compute_query_idf()
 
-        # Set threshold
+    def set_threshold(self,threshold=0.6):
+        '''
+        Set threshold
+        '''
         self.THRESHOLD = threshold
-            
+
 
     def compute_VwS(self,s):
         '''
@@ -103,6 +107,13 @@ class Softtfidf:
         '''
         Returns the soft tf-idf similarity
         '''
+
+        # Check to see whether a model exists; otherwise default to degenerate solution
+        if (self.LOG_IDF == None) | (self.CORPUS_VOCAB == None) | (self.OOV_IDF_VAL == None):
+            self.logger.info("Either (or both) IDF or corpus vocabulary parameters not given " 
+                                +"Defaulting to degenerate mode where corpus consists only of the "
+                                +"two strings given as input.");
+            self.compute_query_idf([s,t])
 
         # Get V(w,S) and V(w,T) (along with vocab lists for s and t) 
         (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
@@ -137,14 +148,14 @@ class Softtfidf:
         return sim
 
 
-    def compute_query_idf(self):
+    def compute_query_idf(self,corpus):
         '''
         Compute IDF from s and t in case you have no externally computed IDF to use 
         '''
         cv = CountVectorizer(min_df = 0.0)
-        cv.fit_transform(self.CORPUS)
+        cv.fit_transform(corpus)
         self.logger.debug(cv.vocabulary_)
-        freq_term_matrix = cv.transform(self.CORPUS)
+        freq_term_matrix = cv.transform(corpus)
         tfidf = TfidfTransformer(norm="l2")
         tfidf.fit(freq_term_matrix)
         log_idf = tfidf.idf_

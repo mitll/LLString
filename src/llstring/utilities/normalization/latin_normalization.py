@@ -7,8 +7,8 @@
 # Copyright 2013-2015 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
-# author: William M. Campbell
-# wcampbell@ll.mit.edu
+# author: William M. Campbell and Charlie Dagli
+# {wcampbell,dagli}@ll.mit.edu
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

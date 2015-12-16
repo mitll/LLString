@@ -2,7 +2,7 @@
 
 # twitter_cv.py
 #
-# Description
+# Create TP training data from boston twitter/instagram match data
 # 
 # Copyright 2015 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1

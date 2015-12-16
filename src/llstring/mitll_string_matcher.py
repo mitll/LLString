@@ -130,11 +130,11 @@ class MITLLStringMatcher:
         tt = self.clean_string(t)
         
         stf = softtfidf.Softtfidf()
-        stf.CORPUS.append(ss); stf.CORPUS.append(tt)
+        stf.set_threshold(0.6)
         tfidf_sim1 = stf.score(ss,tt)
 
         stf2 = softtfidf.Softtfidf()
-        stf2.CORPUS.append(tt); stf2.CORPUS.append(ss)
+        stf2.set_threshold(0.6)
         tfidf_sim2 = stf2.score(tt,ss)
 
         tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim2)
