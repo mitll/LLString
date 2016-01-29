@@ -67,11 +67,12 @@ class MITLLStringMatcher:
     logger = logging.getLogger(__name__)
 
 
-    def __init__(self):
+    def __init__(self,stf_thresh=0.6):
         """
         Constructor
         """
         self.normalizer = tt.MITLLTextNormalizer()
+        self.stf_thresh = stf_thresh
 
 
     def clean_string(self,s):
@@ -130,11 +131,11 @@ class MITLLStringMatcher:
         tt = self.clean_string(t)
         
         stf = softtfidf.Softtfidf()
-        stf.set_threshold(0.6)
+        stf.set_threshold(self.stf_thresh)
         tfidf_sim1 = stf.score(ss,tt)
 
         stf2 = softtfidf.Softtfidf()
-        stf2.set_threshold(0.6)
+        stf2.set_threshold(self.stf_thresh)
         tfidf_sim2 = stf2.score(tt,ss)
 
         tfidf_sim = 0.5*(tfidf_sim1+tfidf_sim2)

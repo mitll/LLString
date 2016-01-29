@@ -35,6 +35,10 @@ import logging
 import numpy as np
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils import check_array,column_or_1d
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.linear_model import LogisticRegression as LR
+
 import jellyfish
 
 from .mitll_string_matcher import MITLLStringMatcher
@@ -70,41 +74,167 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
     logger = logging.getLogger(__name__)
 
 
-    def __init__(self,algorithm='jw',stf_thresh=0.6):
+    def __init__(self,algorithm='jw',X_feat_index=None):
         """
         Constructor
         """
         self.algorithm = algorithm #'lev':levenshtein, 'jw':jaro-winkler or 'stf':softtfidf
-        self.jw_thresh = jw_thresh
+        self.X_feat_index = X_feat_index #feature index to string mapping (at a corpus level)
+        #NOTE: self.stf_thresh can be set in base class
         
+    
+    #
+    # Utitlity Functions
+    #
+    def _validate_targets(self, y):
+        """ Validate class labels provided in y"""
+        y_ = column_or_1d(y, warn=True)
+        check_classification_targets(y)
+        cls, y = np.unique(y_, return_inverse=True)
+        if len(cls) < 2:
+            raise ValueError(
+                "The number of classes has to be at least 2; got %d"
+                % len(cls))
+
+        self.classes_ = cls
+
+        #return np.asarray(y, dtype=np.float64, order='C')
+        return y
+
+
+    #
+    # Learning
+    #
     def fit(self,X,y):
         """
         Fit string matching models to training data
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_one_hot_features)
+            Training data, where n_samples is the number of samples
+            and n_one_hot_features is the number of one-hot features.
+            
+            This array should be generated via fitting a DictVectorizer object
+            to a list of dict objects where each dict object contains a training
+            sample pair (i.e. pairs = [{'s':'steve','t':'stevie'}),...])
+
+            DictVectorizer transforms this list into a sparse array using one-hot
+            encoding. The inverse transform is in X_feat_names.
+
+        y : array-like, shape (n_samples,)
+            Binary class labels
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
         """
-        self.logger.info("nothing yet...")
-        self.classes_, y = np.unique(y, return_inverse=True)
+
+        # Do parameter checking
+
+        # Do input checking
+        X = check_array(X,accept_sparse='csr')
+        y = self._validate_targets(y)
 
 
+        #
+        # Get string match scores
+        #
+        similarities = list()
+
+        for i in xrange(X.shape[0]):
+            # Re-construct strings from sparse input X
+            (junk,inds) = X[i][0].nonzero()
+
+            s = X_feat_index[inds[0]];s = s.split("=")[1]
+            t = X_feat_index[inds[1]];t = t.split("=")[1]
+
+            if self.algorithm == 'lev': #'lev':levenshtein
+                sim = self.levenshtein_similarity(s,t)
+                similarities.append(sim)
+
+            elif self.algorithm == 'jw': #'jw':jaro-winkler
+                sim = self.jaro_winkler_similarity(s,t)
+                similarities.append(sim)
+
+            elif self.algorithm == 'stf': #'stf':softtfidf
+                sim = self.soft_tfidf_similarity(s,t)
+                similarities.append(sim)
+
+            else:
+                raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
+
+        s = np.asarray(similarities).reshape(-1,1)
+
+        # Do Platt Scaling 
+        lr = LR()
+        lr.fit(s,y)
+
+        #'lev':levenshtein
+        self.majority_ = np.argmax(np.bincount(y))
+
+        #'jw':jaro-winkler
+        self.minority_ = np.argmin(np.bincount(y))
+
+        #'stf':softtfidf
+        self.first_ = y[0] 
 
         return self
 
 
+    #
+    # Inference
+    # 
     def decision_function(self,X):
         """ Take input data, turn into decision """
+
+        if self.algorithm == 'lev':
+            return np.repeat(self.classes_[self.majority_], len(X))
+        elif self.algorithm == 'jw':
+            return np.repeat(self.classes_[self.minority_], len(X))
+        elif self.algorithm == 'stf':
+            return np.repeat(self.classes_[self.first_], len(X))
+        else:
+            self.logger.info("i don't know...")
+            return
 
 
     def predict(self,X):
         """ Class predictions """
+        self.logger.info(self.majority_)
+        self.logger.info(self.minority_)
+        self.logger.info(self.first_)
+        if ((X == X).any()) or ((X == np.core.numeric.Inf).any()):
+            #raise ValueError("Predictor has somehow returned either NaN or Inf.")
+            self.logger.info("X somehow has nans or infs in it. This could screw some things up down the line.")
+
         D = self.decision_function(X)
-        return self.classes_[np.argmax(D, axis=1)]
+
+        #return self.classes_[np.argmax(D, axis=1)]
+        return D
 
 
     def predict_proba(self,X):
         """ Posterior match probabilities (need this for log-loss for CV """
+        prob = 0.0
 
-    def score(self):
+        return prob
+
+
+    #
+    # Evaluate
+    #
+    def score(self,X,Y,sample_weight=None):
         """ Score (may not need this) """
+        score = 0.0
 
+        return score
+
+
+    #def transform(self):
+    #    """ Score (may not need this) """
 
     # Inherited from MITLLStringMatcher
     #def clean_string(self,s):
