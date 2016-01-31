@@ -30,16 +30,14 @@
 
 
 # Imports
-import os
-import logging
+import os, logging
 import numpy as np
+import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import check_array,column_or_1d
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.linear_model import LogisticRegression as LR
-
-import jellyfish
 
 from .mitll_string_matcher import MITLLStringMatcher
 
@@ -55,34 +53,41 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
     """
 
     # get projectdir following project dir conventions...
-    projectdir = os.path.realpath(__file__).split('src')[0]
+    #projectdir = os.path.realpath(__file__).split('src')[0]
 
-    # projectname via project dir conventions...
-    projectname = projectdir.split(os.sep)[-2:-1][0]
+    ## projectname via project dir conventions...
+    #projectname = projectdir.split(os.sep)[-2:-1][0]
 
-    #current package name (i.e. containing directory name)
-    pkgname = os.path.realpath(__file__).split(os.sep)[-2]
+    ##current package name (i.e. containing directory name)
+    #pkgname = os.path.realpath(__file__).split(os.sep)[-2]
 
-    #class name
-    classname = __name__
+    ##class name
+    #classname = __name__
 
-    # Logging
-    LOG_LEVEL = logging.INFO
-    logging.basicConfig(level=LOG_LEVEL,
-                                format='%(asctime)s %(levelname)-8s %(message)s',
-                                                    datefmt='%a, %d %b %Y %H:%M:%S')
-    logger = logging.getLogger(__name__)
+    ## Logging
+    #LOG_LEVEL = logging.INFO
+    #logging.basicConfig(level=LOG_LEVEL,
+    #                            format='%(asctime)s %(levelname)-8s %(message)s',
+    #                                                datefmt='%a, %d %b %Y %H:%M:%S')
+    #logger = logging.getLogger(__name__)
 
 
-    def __init__(self,algorithm='jw',X_feat_index=None):
+    def __init__(self,algorithm='jw'):
         """
         Constructor
         """
         self.algorithm = algorithm #'lev':levenshtein, 'jw':jaro-winkler or 'stf':softtfidf
-        self.X_feat_index = X_feat_index #feature index to string mapping (at a corpus level)
+        #self.X_feat_index = X_feat_index #feature index to string mapping (at a corpus level)
         #NOTE: self.stf_thresh can be set in base class
         
     
+    def test_inher(self):
+        """ Test some stuff out regarding inheritence"""
+        self.logger.info("projectdir: {0}".format(self.projectdir))
+        self.logger.info("projectname: {0}".format(self.projectname))
+        self.logger.info("pkgname: {0}".format(self.pkgname))
+        self.logger.info("classname: {0}".format(self.classname))
+
     #
     # Utitlity Functions
     #
@@ -101,6 +106,31 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
     #    #return np.asarray(y, dtype=np.float64, order='C')
     #    return y
 
+    #
+    # Utitlity Functions
+    #
+    def init_match_algorithm(self):
+        """ Initialize dict containing match algorithm parameters """
+        
+        match_algo = dict()
+        match_algo['params'] = dict()
+        match_algo['match_fcn'] = ""
+
+        if self.algorithm == 'lev': #levenshtein
+            match_algo['match_fcn'] = self.levenshtein_similarity
+
+        elif self.algorithm == 'jw': #jaro-winkler
+            match_algo['match_fcn'] = self.jaro_winkler_similarity
+
+        elif self.algorithm == 'stf': #softtfidf
+            match_algo['params']['stfidf_matcher'] = softtfidf.Softtfidf(self.stf_thresh)
+            match_algo['params']['backward_stfidf'] = ""
+            match_algo['match_fcn'] = self.soft_tfidf_similarity
+
+        else:
+            raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
+
+    
     
     def set_X_feat_index(self,X_feat_index):
         """ Set X_feat_index """
@@ -177,8 +207,8 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
         s = self.get_raw_similarities(X)
 
         # Do Platt Scaling 
-        self.lr = LR()
-        self.lr.fit(s,y)
+        self.lr_ = LR()
+        self.lr_.fit(s,y)
 
         return self
 
@@ -192,33 +222,49 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
         s = self.get_raw_similarities(X)
 
         # Do Platt Scaling 
-        self.lr = LR()
-        self.lr.fit(s,y)
+        self.lr_ = LR(penalty='l1',class_weight='balanced')
+        self.lr_.fit(s,y)
 
         return self
+
+
+    def save_model(self,fnameout):
+        """ Save model parameters out after fitting. """
+        if self.lr_:
+            pickle.dump(self.lr_,open(fnameout,"wb"))
+            return self
+        else:
+            raise ValueError("save_model failed: No model has yet been fit or loaded.")
+
+
+    def load_model(self,fnamein):
+        """ Load model parameters. """
+        self.lr_ = pickle.load(open(fnamein,'rb')) # will throw I/O error if file not found
+        return self
+
 
     #
     # Inference
     # 
-    def decision_functioni_old(self,X):
+    def decision_function(self,X):
         """ Take input data, turn into decision """
         s = self.get_raw_similarities(X)
 
-        return self.lr.decision_function(s)
+        return self.lr_.decision_function(s)
 
 
     def predict(self,X):
         """ Class predictions """
         s = self.get_raw_similarities(X)
 
-        return self.lr.predict(s)
+        return self.lr_.predict(s)
 
 
     def predict_proba(self,X):
         """ Posterior match probabilities (need this for log-loss for CV """
         s = self.get_raw_similarities(X)
 
-        return self.lr.predict_proba(s)
+        return self.lr_.predict_proba(s)
 
     #
     # Evaluate
@@ -227,7 +273,7 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
         """ Score (may not need this) """
         s = self.get_raw_similarities(X)
 
-        return self.lr.score(s,y,sample_weight)
+        return self.lr_.score(s,y,sample_weight)
 
 
     #def transform(self):

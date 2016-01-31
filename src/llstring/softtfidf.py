@@ -54,13 +54,16 @@ class Softtfidf:
     logger = logging.getLogger(__name__)
 
 
-    def __init__(self):
+    def __init__(self,threshold=0.6, idf_model=None):
         '''
         Constructor 
         '''
-        self.LOG_IDF = None
-        self.CORPUS_VOCAB = None
-        self.OOV_IDF_VAL = None
+        self.THRESHOLD = threshold
+
+        if idf_model == None:
+            self.LOG_IDF = None
+            self.CORPUS_VOCAB = None
+            self.OOV_IDF_VAL = None
 
 
     def set_model(self,idf_model):

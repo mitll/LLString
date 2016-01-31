@@ -109,6 +109,7 @@ if __name__ == "__main__":
 
     # Fullname sample filename
     fname_idf_train = os.path.join(outdir,"idf_training_data.txt")
+    fnameout_idf_model = os.path.join(outdir,"english_socialmedia_idf.model")
 
     # Normalizer
     normer = latin_normalization.MITLLLatinNormalizer()
@@ -203,3 +204,5 @@ if __name__ == "__main__":
             logger.info("{0},{1}".format(index2name[high_idf_inds[i]],idft.LOG_IDF[high_idf_inds[i]]))
 
         logger.info(len(idft.LOG_IDF))
+
+        pickle.dump(idft,open(fnameout_idf_model,"wb"))
