@@ -88,7 +88,7 @@ class IDFTrainer:
 
         # collect model components
         self.IDF_MODEL['idf'] = self.LOG_IDF
-        self.IDF_MODEL['corpus_vocab'] = self.LOG_IDF
+        self.IDF_MODEL['corpus_vocab'] = self.CORPUS_VOCAB
         self.IDF_MODEL['oov_idf_val'] = self.OOV_IDF_VAL
 
 
@@ -96,6 +96,6 @@ class IDFTrainer:
         '''
         Save-out learned IDF dictionary and associated metadata (e.g. self.IDF_MODEL)
         '''
-        self.logger("saving IDF model to {0}".format(fnameout))
+        self.logger.info("saving IDF model to {0}".format(fnameout))
         pickle.dump(self.IDF_MODEL,open(fnameout,"wb"))
 

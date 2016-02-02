@@ -39,6 +39,7 @@ from sklearn.utils import check_array,column_or_1d
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.linear_model import LogisticRegression as LR
 
+from .softtfidf import Softtfidf
 from .mitll_string_matcher import MITLLStringMatcher
 
 
@@ -46,51 +47,138 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
     """
     MIT-LL String Matcher as Sklearn Estimator:
 
-     Basic String Matching Techniques:
+     String Matching Techniques:
        - Levenshtein Distance
        - Jaro-Winkler 
        - Soft TF-IDF
     """
 
-    # get projectdir following project dir conventions...
-    #projectdir = os.path.realpath(__file__).split('src')[0]
+    def __init__(self,algorithm='jw', stf_thresh=0.6, idf_model=None):
+        """ Initialize dict containing hyperparameters """
 
-    ## projectname via project dir conventions...
-    #projectname = projectdir.split(os.sep)[-2:-1][0]
+        self.hyparams = dict()
+        self.hyparams['match_fcn'] = None
+        self.hyparams['algo'] = algorithm
 
-    ##current package name (i.e. containing directory name)
-    #pkgname = os.path.realpath(__file__).split(os.sep)[-2]
+        if algorithm == 'lev': #levenshtein
+            self.hyparams['match_fcn'] = self.levenshtein_similarity
 
-    ##class name
-    #classname = __name__
+        elif algorithm== 'jw': #jaro-winkler
+            self.hyparams['match_fcn'] = self.jaro_winkler_similarity
 
-    ## Logging
-    #LOG_LEVEL = logging.INFO
-    #logging.basicConfig(level=LOG_LEVEL,
-    #                            format='%(asctime)s %(levelname)-8s %(message)s',
-    #                                                datefmt='%a, %d %b %Y %H:%M:%S')
-    #logger = logging.getLogger(__name__)
+        elif algorithm== 'stf': #softtfidf
+            self.hyparams['match_fcn'] = self.soft_tfidf_similarity
+            self.hyparams['stf_thresh'] = stf_thresh
+            self.hyparams['idf_model'] = idf_model
 
 
-    def __init__(self,algorithm='jw'):
+    #
+    # Basic String Matching Functions
+    #
+    def soft_tfidf_similarity(self,s,t):
         """
-        Constructor
+        Soft TFIDF Similarity:
+
+        This similarity measure is only meaningful when you have multi-word strings. 
+        For single words, this measure will return 0.0
         """
-        self.algorithm = algorithm #'lev':levenshtein, 'jw':jaro-winkler or 'stf':softtfidf
-        #self.X_feat_index = X_feat_index #feature index to string mapping (at a corpus level)
-        #NOTE: self.stf_thresh can be set in base class
         
-    
-    def test_inher(self):
-        """ Test some stuff out regarding inheritence"""
-        self.logger.info("projectdir: {0}".format(self.projectdir))
-        self.logger.info("projectname: {0}".format(self.projectname))
-        self.logger.info("pkgname: {0}".format(self.pkgname))
-        self.logger.info("classname: {0}".format(self.classname))
+        ss = self.clean_string(s)
+        tt = self.clean_string(t)
+        
+        stf = self.hyparams['matcher'] #soft tf-idf object
+
+        tfidf_sim = 0.5*(stf.score(ss,tt)+stf.score(tt,ss))
+
+        return tfidf_sim
+
 
     #
     # Utitlity Functions
     #
+    def validate_hyparams(self):
+        """ Basic hyperparameter input validation"""
+        
+        if self.hyparams['algo'] not in set(['lev','jw','stf']):
+            raise ValueError("Value of algorithm has to be either 'lev','jw' or 'stf'")
+
+        if self.hyparams['algo'] == 'stf':
+            if (self.hyparams['stf_thresh'] < 0) | (self.hyparams['stf_thresh'] > 1):
+                raise ValueError("Value of soft tf-idf's internal jaro-winkler threshold", \
+                        "must be [0,1].")
+
+            if self.hyparams['idf_model']:
+                if set(self.hyparams['idf_model'].keys()) != set(['idf','corpus_vocab','oov_idf_val']):
+                    raise ValueError("IDF model provided must contain only the following keys: ", \
+                            "'idf', 'corpus_vocab', and 'oov_idf_val'.")
+
+                if (not isinstance(self.hyparams['idf_model']['idf'],np.ndarray)) or \
+                        (self.hyparams['idf_model']['idf'].dtype.type is not np.float64):
+                    raise ValueError("idf_model['idf'] must be an np.ndarray of dtype np.float64")
+
+                if not isinstance(self.hyparams['idf_model']['corpus_vocab'],dict):
+                    raise ValueError("idf_model['corpus_vocab'] must be a dict.")
+
+                if not isinstance(self.hyparams['idf_model']['oov_idf_val'],float):
+                    raise ValueError("idf_model['oov_idf_val'] must be a float.")
+
+
+    def init_algorithm(self):
+        """ Validate hyperparameter inputs, init matcher object if neccessary"""
+        
+        self.validate_hyparams()
+
+        # Initialize Soft TF-IDF matcher if needed
+        if self.hyparams['algo'] == 'stf': #softtfidf
+            self.hyparams['matcher'] = Softtfidf(self.hyparams['stf_thresh'],self.hyparams['idf_model'])
+
+    
+    def get_raw_similarities(self, X):
+        """ Convert input to raw similarities """
+
+        similarities = list()
+
+        for pair in X:
+            s = pair[0]; t = pair[1];
+            sim = self.hyparams['match_fcn'](s,t)
+            similarities.append(sim)
+
+        s = np.asarray(similarities).reshape(-1,1)
+        
+        return s
+
+
+    def save_model(self,fnameout):
+        """ Save model parameters out after fitting. """
+        
+        if self.lr_:
+            model_out = dict()
+            model_out['algo'] = self.hyparams['algo']
+            model_out['calibration'] = self.lr_
+            if self.hyparams['algo'] == 'stf':
+                model_out['stf_thresh'] = self.hyparams['stf_thresh']
+                model_out['idf_model'] = self.hyparams['idf_model']
+
+            pickle.dump(model_out,open(fnameout,"wb"))
+            return self
+        else:
+            raise ValueError("save_model failed: No model has yet been fit or loaded.")
+
+
+    def load_model(self,fnamein):
+        """ Load model parameters. """
+        model_in = pickle.load(open(fnamein,'rb')) # will throw I/O error if file not found
+
+        self.lr_ = model_in['calibration']
+        self.hyparams['algo'] = model_in['algo']
+        if model_in['algo'] == 'stf':
+            self.hyparams['stf_thresh'] = model_in['stf_thresh']
+            self.hyparams['idf_model'] = model_in['idf_model']
+        self.init_algorithm() #validate hyparams (we assume object not fit when load_model called)
+
+        return self
+
+
     #def _validate_targets(self, y):
     #    """ Validate class labels provided in y"""
     #    y_ = column_or_1d(y, warn=True)
@@ -105,118 +193,59 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
 
     #    #return np.asarray(y, dtype=np.float64, order='C')
     #    return y
-
-    #
-    # Utitlity Functions
-    #
-    def init_match_algorithm(self):
-        """ Initialize dict containing match algorithm parameters """
-        
-        match_algo = dict()
-        match_algo['params'] = dict()
-        match_algo['match_fcn'] = ""
-
-        if self.algorithm == 'lev': #levenshtein
-            match_algo['match_fcn'] = self.levenshtein_similarity
-
-        elif self.algorithm == 'jw': #jaro-winkler
-            match_algo['match_fcn'] = self.jaro_winkler_similarity
-
-        elif self.algorithm == 'stf': #softtfidf
-            match_algo['params']['stfidf_matcher'] = softtfidf.Softtfidf(self.stf_thresh)
-            match_algo['params']['backward_stfidf'] = ""
-            match_algo['match_fcn'] = self.soft_tfidf_similarity
-
-        else:
-            raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
-
-    
-    
-    def set_X_feat_index(self,X_feat_index):
-        """ Set X_feat_index """
-        self.X_feat_index = X_feat_index
+    #def set_X_feat_index(self,X_feat_index):
+    #    """ Set X_feat_index """
+    #    self.X_feat_index = X_feat_index
 
 
-    def get_raw_similarities_old(self, X):
-        """ Convert input to raw similarities """
+    #def get_raw_similarities_matrix(self, X):
+    #    """ Convert input to raw similarities """
 
-        similarities = list()
+    #    similarities = list()
 
-        for i in xrange(X.shape[0]):
-            # Re-construct strings from sparse input X
-            (junk,inds) = X[i][0].nonzero()
+    #    for i in xrange(X.shape[0]):
+    #        # Re-construct strings from sparse input X
+    #        (junk,inds) = X[i][0].nonzero()
 
-            s = self.X_feat_index[inds[0]];s = s.split("=")[1]
-            t = self.X_feat_index[inds[1]];t = t.split("=")[1]
+    #        s = self.X_feat_index[inds[0]];s = s.split("=")[1]
+    #        t = self.X_feat_index[inds[1]];t = t.split("=")[1]
 
-            if self.algorithm == 'lev': #'lev':levenshtein
-                sim = self.levenshtein_similarity(s,t)
-                similarities.append(sim)
+    #        if self.algorithm == 'lev': #'lev':levenshtein
+    #            sim = self.levenshtein_similarity(s,t)
+    #            similarities.append(sim)
 
-            elif self.algorithm == 'jw': #'jw':jaro-winkler
-                sim = self.jaro_winkler_similarity(s,t)
-                similarities.append(sim)
+    #        elif self.algorithm == 'jw': #'jw':jaro-winkler
+    #            sim = self.jaro_winkler_similarity(s,t)
+    #            similarities.append(sim)
 
-            elif self.algorithm == 'stf': #'stf':softtfidf
-                sim = self.soft_tfidf_similarity(s,t)
-                similarities.append(sim)
+    #        elif self.algorithm == 'stf': #'stf':softtfidf
+    #            sim = self.soft_tfidf_similarity(s,t)
+    #            similarities.append(sim)
 
-            else:
-                raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
+    #        else:
+    #            raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
 
-        s = np.asarray(similarities).reshape(-1,1)
-        
-        return s
+    #    s = np.asarray(similarities).reshape(-1,1)
+    #    
+    #    return s
 
 
-    def get_raw_similarities(self, X):
-        """ Convert input to raw similarities """
 
-        similarities = list()
-
-        for pair in X:
-
-            s = pair[0]; t = pair[1];
-
-            if self.algorithm == 'lev': #'lev':levenshtein
-                sim = self.levenshtein_similarity(s,t)
-                similarities.append(sim)
-
-            elif self.algorithm == 'jw': #'jw':jaro-winkler
-                sim = self.jaro_winkler_similarity(s,t)
-                similarities.append(sim)
-
-            elif self.algorithm == 'stf': #'stf':softtfidf
-                sim = self.soft_tfidf_similarity(s,t)
-                similarities.append(sim)
-
-            else:
-                raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
-
-        s = np.asarray(similarities).reshape(-1,1)
-        
-        return s
 
     #
     # Learning
     #
-    def fit_old(self,X,y):
-        """ Fit string matching models to training data """
-
-        # Get string match scores
-        s = self.get_raw_similarities(X)
-
-        # Do Platt Scaling 
-        self.lr_ = LR()
-        self.lr_.fit(s,y)
-
-        return self
-
-
     def fit(self,X,y):
         """ Fit string matching models to training data
         Assuming X is list of tuples: (('s1',t1'),...,('sN',tN'))
         """
+
+        # validate algorithm input
+        #else:
+        #    raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
+        ## Initialize match algorithm object
+        #self.init_match_algorithm()
+        self.init_algorithm()
 
         # Get string match scores
         s = self.get_raw_similarities(X)
@@ -228,19 +257,6 @@ class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin
         return self
 
 
-    def save_model(self,fnameout):
-        """ Save model parameters out after fitting. """
-        if self.lr_:
-            pickle.dump(self.lr_,open(fnameout,"wb"))
-            return self
-        else:
-            raise ValueError("save_model failed: No model has yet been fit or loaded.")
-
-
-    def load_model(self,fnamein):
-        """ Load model parameters. """
-        self.lr_ = pickle.load(open(fnamein,'rb')) # will throw I/O error if file not found
-        return self
 
 
     #

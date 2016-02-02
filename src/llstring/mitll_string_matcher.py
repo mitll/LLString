@@ -67,12 +67,11 @@ class MITLLStringMatcher:
     logger = logging.getLogger(__name__)
 
 
-    def __init__(self,stf_thresh=0.6):
+    def __init__(self):
         """
         Constructor
         """
         self.normalizer = tt.MITLLTextNormalizer()
-        self.stf_thresh = stf_thresh
 
 
     def clean_string(self,s):

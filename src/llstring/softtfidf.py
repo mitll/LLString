@@ -47,7 +47,7 @@ class Softtfidf:
     """
 
     # Logging
-    LOG_LEVEL = logging.INFO
+    LOG_LEVEL = logging.DEBUG
     logging.basicConfig(level=LOG_LEVEL,
                                 format='%(asctime)s %(levelname)-8s %(message)s',
                                                     datefmt='%a, %d %b %Y %H:%M:%S')
@@ -64,6 +64,10 @@ class Softtfidf:
             self.LOG_IDF = None
             self.CORPUS_VOCAB = None
             self.OOV_IDF_VAL = None
+        else:
+            self.LOG_IDF = idf_model['idf']
+            self.CORPUS_VOCAB = idf_model['corpus_vocab']
+            self.OOV_IDF_VAL = idf_model['oov_idf_val']
 
 
     def set_model(self,idf_model):
@@ -112,7 +116,7 @@ class Softtfidf:
         '''
 
         # Check to see whether a model exists; otherwise default to degenerate solution
-        if (self.LOG_IDF == None) | (self.CORPUS_VOCAB == None) | (self.OOV_IDF_VAL == None):
+        if (self.LOG_IDF is None) | (self.CORPUS_VOCAB is None) | (self.OOV_IDF_VAL is None):
             self.logger.info("Either (or both) IDF or corpus vocabulary parameters not given " 
                                 +"Defaulting to degenerate mode where corpus consists only of the "
                                 +"two strings given as input.");
@@ -138,11 +142,15 @@ class Softtfidf:
 
         # compute soft tf-idf sim
         sim = 0.0
+        self.logger.debug(s_vocab)
         for w in s_vocab:
             for v in t_vocab:
-                self.logger.debug("(w,v,dist): ({0},{1},{2})".format(w,v,dist))
                 if (jw_sims[w][v] >= self.THRESHOLD):
                     inner_sum = (vprime_ws[w]/vprime_ws_norm)*(vprime_wt[max_vT[w]['max_v']]/vprime_wt_norm)*max_vT[w]['score']
+                    self.logger.debug("(w,vprime_ws[w],vprime_ws_norm): ({0},{1},{2})".format(w,vprime_ws[w],vprime_ws_norm))
+                    self.logger.debug("(max_vT[w]['max_v'],vprime_wt[max_vT['max_v'],vprime_wt_norm): ({0},{1},{2})".format(max_vT[w]['max_v'],vprime_wt[max_vT[w]['max_v']],vprime_wt_norm))
+                    self.logger.debug("(max_vT[w]['score']): ({0})".format(max_vT[w]['score']))
+                    self.logger.debug("(w,v,inner_sum): ({0},{1},{2})".format(w,v,inner_sum))
                     sim += inner_sum
                     break
 

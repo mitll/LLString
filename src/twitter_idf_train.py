@@ -205,4 +205,4 @@ if __name__ == "__main__":
 
         logger.info(len(idft.LOG_IDF))
 
-        pickle.dump(idft,open(fnameout_idf_model,"wb"))
+        idft.save_model(fnameout_idf_model)
