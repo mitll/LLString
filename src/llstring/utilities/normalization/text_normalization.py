@@ -27,9 +27,7 @@ import logging
 import unicodedata
 
 class MITLLTextNormalizer: 
-    '''
-    Text-Normalization Routines
-    '''
+    """ Text-Normalization Routines """
 
     # Logging
     LOG_LEVEL = logging.INFO
@@ -40,23 +38,28 @@ class MITLLTextNormalizer:
     
 
     def __init__(self):
-        '''
-        Constructor
-        '''
+        """ Constructor """
         self.rewrite_hash = self.create_utf8_rewrite_hash()
 
 
+    def normalize(self,ln):
+        # Various normalization routines -- pick and choose as needed
+        ln = unicode(ln) #make sure we're in unicode
+        ln = self.normalize_unicode_composed(ln) #from base-class
+        ln = self.filter_unicode(ln) #from base-class
+        ln = self.remove_html_markup(ln) #from base class
+        if (ln == ' '):
+            ln = ''
+        return ln
+
+
     def normalize_unicode_composed(self,txt):
-        '''
-        Normalize unicode: Composed
-        '''
+        """ Normalize unicode: Composed """
         return unicodedata.normalize('NFKC', txt)
 
 
     def normalize_unicode_decomposed(self,txt):
-        '''
-        Normalize unicode: Decomposed (i.e. expanded unicode)
-        '''
+        """ Normalize unicode: Decomposed (i.e. expanded unicode) """
         return unicodedata.normalize('NFKD', txt)
 
 
@@ -80,8 +83,12 @@ class MITLLTextNormalizer:
 
 
     def create_utf8_rewrite_hash (self):
-        # Strictly speaking (and in python) any ascii character >= 128 is not valid
-        # This tries to rewrite utf-8 chars to ascii in a rational manner
+        """ 
+        Rewrite utf-8 chars to ascii in a rational manner
+            Strictly speaking (and in python) 
+            any ascii character >= 128 is not valid
+        """
+
         rewrite_hash = dict([])
         rewrite_hash[u'\xA0'] = " "       # NO-BREAK SPACE 
         rewrite_hash[u'\xA6'] = " "       # BROKEN BAR
@@ -149,7 +156,8 @@ class MITLLTextNormalizer:
 
 
     def remove_html_markup (self,ln):
-        # remove HTML style angle bracketed tags
+        """ remove HTML style angle bracketed tags """
+
         ln = re.sub('\<\S+\>', ' ', ln)
         
         # remove market symbols
@@ -176,3 +184,16 @@ class MITLLTextNormalizer:
 
         return ln
 
+
+    def clean_string(self,s):
+        """ Strip leading characters, lower """
+
+        if isinstance(s,unicode):
+            ss = s.lower()
+        else:
+            ss = unicode(s.lower(),"utf-8")
+
+        if len(ss) == 0:
+            ss = u''
+
+        return ss

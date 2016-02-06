@@ -41,6 +41,7 @@ from llstring.training import idf_trainer
 from llstring.mitll_string_matcher_sklearn import MITLLStringMatcherSklearn
 
 from sklearn.feature_extraction import DictVectorizer
+from sklearn import cross_validation 
 
 #
 # Logging
@@ -250,63 +251,109 @@ if __name__ == "__main__":
 
 
         # input training data as list
-        y = list(); training_list = list()
-        y.append(1); training_list.append(('stephen','stevie'))
-        y.append(1); training_list.append(('steve','stevie'))
-        y.append(1); training_list.append(('gary','garrie'))
-        y.append(1); training_list.append(('lloyd','loyd'))
-        y.append(1); training_list.append(('lawrence','larry'))
-        y.append(1); training_list.append(('michael','michaeel'))
-        y.append(1); training_list.append(('gloria','loria'))
-        y.append(1); training_list.append(('jeff','jeof'))
-        y.append(1); training_list.append(('calvin','kalvin'))
-        y.append(0); training_list.append(('steve','comeau'))
-        y.append(0); training_list.append(('ralph','tony'))
-        y.append(0); training_list.append(('susan','andrea'))
-        y.append(0); training_list.append(('michael','elizabeth'))
-        y.append(0); training_list.append(('marlon','brando'))
-        y.append(0); training_list.append(('walter','morton'))
-        y.append(0); training_list.append(('JD','McPherson'))
-        y.append(0); training_list.append(('goofball','johnson'))
-        y.append(0); training_list.append(('scott','smith'))
-        y.append(0); training_list.append(('andy','loudermilk'))
-        y.append(0); training_list.append(('renee','smith'))
+        #y = list(); training_list = list()
+        #y.append(1); training_list.append(('stephen','stevie'))
+        #y.append(1); training_list.append(('steve','stevie'))
+        #y.append(1); training_list.append(('gary','garrie'))
+        #y.append(1); training_list.append(('lloyd','loyd'))
+        #y.append(1); training_list.append(('lawrence','larry'))
+        #y.append(1); training_list.append(('michael','michaeel'))
+        #y.append(1); training_list.append(('gloria','loria'))
+        #y.append(1); training_list.append(('jeff','jeof'))
+        #y.append(1); training_list.append(('calvin','kalvin'))
+        #y.append(0); training_list.append(('steve','comeau'))
+        #y.append(0); training_list.append(('ralph','tony'))
+        #y.append(0); training_list.append(('susan','andrea'))
+        #y.append(0); training_list.append(('michael','elizabeth'))
+        #y.append(0); training_list.append(('marlon','brando'))
+        #y.append(0); training_list.append(('walter','morton'))
+        #y.append(0); training_list.append(('JD','McPherson'))
+        #y.append(0); training_list.append(('goofball','johnson'))
+        #y.append(0); training_list.append(('scott','smith'))
+        #y.append(0); training_list.append(('andy','loudermilk'))
+        #y.append(0); training_list.append(('renee','smith'))
+
+        # load-in training data (tp matches and hard negatives)
+        tp_training = pickle.load(open(os.path.join(projectdir,'data/input/cv_match_data/labeled_twt2inst_fullname.pckl'),'rb'))
+        tp_keys = tp_training[0].keys()
+        all_training = pickle.load(open(os.path.join(projectdir,'data/input/cv_match_data/all_labeled_twt2inst_fullname.pckl'),'rb'))
+        y = list(); training_list = list();
+        for s in all_training:
+            training_list.append((s,all_training[s]))
+            if s in tp_keys:
+                y.append(1)
+            else:
+                y.append(0)
+
+        #load-in more (easy) negatives to get pos/neg examples in balance
+        N_negs = len(np.nonzero(y)[0]) - (len(y) - len(np.nonzero(y)[0]))
+        count = 0
+        fnamein = os.path.join(projectdir,"data/output/models/sampled_socialmedia_negative_pairs.txt")
+        fo = open(fnamein,"r")
+        for line in fo:
+            if count < N_negs:
+                line_split = unicode(line).rstrip().split("\t")
+                training_list.append((line_split[0],line_split[1]));
+                y.append(0)
+                count += 1
+            else:
+                break
+        fo.close()
+
+
+        # Cross-Validation
+        X_train, X_test, y_train, y_test = cross_validation.train_test_split(training_list,y,test_size=0.7,random_state=0)
+        idf_model = pickle.load(open(os.path.join(projectdir,"data/output/models/english_socialmedia_idf.model"),'rb'))
+        matcher_stf = MITLLStringMatcherSklearn(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin') #using default stf_thresh (0.6)
+        matcher_stf.fit(X_train,y_train)
+        logger.info(matcher_stf.predict_proba(X_test))
+        logger.info(matcher_stf.score(X_test,y_test))
+
+        sys.exit()
 
         #Levenshtein
-        matcher_lev = MITLLStringMatcherSklearn(algorithm='lev')
-        matcher_lev.fit(training_list,y)
+        matcher_lev = MITLLStringMatcherSklearn(algorithm='lev',text_normalizer = 'latin')
+        matcher_lev.fit(training_list,y);
         matcher_lev.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_lev.model"))
-        matcher_lev2 = MITLLStringMatcherSklearn(algorithm='lev')
+        levout1 = matcher_lev.predict_proba(training_list) #test on train!
+
+        matcher_lev2 = MITLLStringMatcherSklearn(algorithm='lev',text_normalizer = 'latin')
         matcher_lev2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_lev.model"))
+        levout2 = matcher_lev2.predict_proba(training_list) #test on train!
+
+        if (levout1 == levout2).all(): logger.info("Levenshtein Test: Pass")
+        else: logger.info("Levenshtein Test: Fail")
 
         #Jaro-Winkler
-        matcher_jw = MITLLStringMatcherSklearn(algorithm='jw')
+        matcher_jw = MITLLStringMatcherSklearn(algorithm='jw',text_normalizer = 'latin')
         matcher_jw.fit(training_list,y)
         matcher_jw.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_jw.model"))
-        matcher_jw2 = MITLLStringMatcherSklearn(algorithm='jw')
+        jwout1 = matcher_jw.predict_proba(training_list)  #test on train!
+
+        matcher_jw2 = MITLLStringMatcherSklearn(algorithm='jw',text_normalizer = 'latin')
         matcher_jw2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_jw.model"))
+        jwout2 = matcher_jw2.predict_proba(training_list)  #test on train!
+
+        if (jwout1 == jwout2).all(): logger.info("Jaro-Winkler Test: Pass")
+        else: logger.info("Jaro-Winkler Test: Fail")
 
         #Soft TF-IDF
         idf_model = pickle.load(open(os.path.join(projectdir,"data/output/models/english_socialmedia_idf.model"),'rb'))
-        matcher_stf = MITLLStringMatcherSklearn(algorithm='stf',idf_model=idf_model) #using default stf_thresh (0.6)
+        matcher_stf = MITLLStringMatcherSklearn(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin') #using default stf_thresh (0.6)
         matcher_stf.fit(training_list,y)
         matcher_stf.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_stf.model"))
-        matcher_stf2 = MITLLStringMatcherSklearn(algorithm='stf')
+        stfout1 = matcher_stf.predict_proba(training_list) #test on train!
+
+        matcher_stf2 = MITLLStringMatcherSklearn(algorithm='stf',text_normalizer = 'latin')
         matcher_stf2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_stf.model"))
+        stfout2 = matcher_stf2.predict_proba(training_list) #test on train!
 
+        if (stfout1 == stfout2).all(): logger.info("Soft TF-IDF Test: Pass")
+        else: logger.info("Soft TF-IDF Test: Fail")
 
-        # Print some stuff out
-        logger.info(matcher_lev.predict_proba(training_list)) #test on train!
-        logger.info(matcher_lev2.predict_proba(training_list)) #test on train!
-        logger.info(matcher_jw.predict_proba(training_list))  #test on train!
-        logger.info(matcher_jw2.predict_proba(training_list))  #test on train!
-        logger.info(matcher_stf.predict_proba(training_list)) #test on train!
-        logger.info(matcher_stf2.predict_proba(training_list)) #test on train!
 
 
         # OUTSTANDING:
-        #[] load-in the actual data (including negative pairs, which you have to write the code for)
-        #             this also means all the test data too... (Lin's paired data?)
         #[] do the cross-validation to choose hyperparamters for STFIDF
         #[] Just make one matcher class (i.e. remove sklearn)
 
@@ -317,11 +364,21 @@ if __name__ == "__main__":
             #[x] is soft-tf-idf matcher symmetric by default now? do some anectdotal testing...
         #[x] write out model parameters saveout method;
         #[x] also load model parameters method; 
+        #[x] fix get_raw_similarities() to handle non-conforming pairs
+        #[x] incorporate text normalizer hyperparameter into string matcher model?
+        #[x] fix mutuable list problem in fit() 
+        #[x] with normalizer as generic, fix problem where normalizer returns string of length 1, but it's punctuation that
+        #   gets stop-listed when it goes to stf
+        #[x] raise ValueError for normalized strings that are zero-length
+        #[x] raise ValueError for strings that are all stop-list words 
+        #[x] load-in the actual data (including negative pairs, which you have to write the code for)
+            #[x] code to randomly sample negative pairs
 
         # MAYBE: 
         #[] sklearn class: function to load idf model from fname
         #[] also IDF train or load-in for stfidf
         #[] Train arabic name match models to release only to XDATA community
+        #[] Lin's paired data? 
 
 
 

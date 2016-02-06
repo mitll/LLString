@@ -34,7 +34,7 @@ import numpy as np
 import jellyfish
 
 from . import softtfidf
-from .utilities.normalization import text_normalization as tt
+from .utilities.normalization import text_normalization as txtnorm
 
 
 class MITLLStringMatcher:
@@ -71,7 +71,7 @@ class MITLLStringMatcher:
         """
         Constructor
         """
-        self.normalizer = tt.MITLLTextNormalizer()
+        self.normalizer = txtnorm.MITLLTextNormalizer()
 
 
     def clean_string(self,s):
@@ -95,8 +95,10 @@ class MITLLStringMatcher:
         Levenshtein Similarity 
         """
         
-        ss = self.clean_string(s)
-        tt = self.clean_string(t)
+        #ss = self.clean_string(s)
+        #tt = self.clean_string(t)
+        ss = self.normalizer.clean_string(s)
+        tt = self.normalizer.clean_string(t)
 
         Ns = len(ss); Nt = len(tt);
 
@@ -110,8 +112,10 @@ class MITLLStringMatcher:
         Jaro-Winkler Similarity
         """
         
-        ss = self.clean_string(s)
-        tt = self.clean_string(t)
+        #ss = self.clean_string(s)
+        #tt = self.clean_string(t)
+        ss = self.normalizer.clean_string(s)
+        tt = self.normalizer.clean_string(t)
 
         jw_sim = jellyfish.jaro_winkler(ss,tt)
 
@@ -126,8 +130,10 @@ class MITLLStringMatcher:
         For single words, this measure will return 0.0
         """
         
-        ss = self.clean_string(s)
-        tt = self.clean_string(t)
+        #ss = self.clean_string(s)
+        #tt = self.clean_string(t)
+        ss = self.normalizer.clean_string(s)
+        tt = self.normalizer.clean_string(t)
         
         stf = softtfidf.Softtfidf(self.stf_thresh)
         #stf.set_threshold(self.stf_thresh)

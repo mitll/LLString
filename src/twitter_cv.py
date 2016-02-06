@@ -32,8 +32,9 @@ import cPickle as pickle
 
 import gzip
 
-from utilities import text_normalization as tn
-import mitll_string_match as llsm
+#from utilities import text_normalization as tn
+from llstring.utilities.normalization import text_normalization as tn
+import llstring.mitll_string_matcher as llsm
 
 #from ConfigParser import SafeConfigParser
 
@@ -156,6 +157,32 @@ if __name__ == "__main__":
     logger.info(twt2inst_fullname)
     logger.info(len(twt2inst_fullname))
 
+    #
+    # Grab all TP labeled pairs (TP and hard-negatives)
+    #
+    all_labeled_twt2inst_fullname = dict()
+    fnameout = os.path.join(truth_outdir,"all_labeled_twt2inst_fullname.pckl")
+
+    for s in twt2inst_fullname.keys():
+        t = twt2inst_fullname[s]
+
+        if (s == t) | (len(s) == 0) | (len(t) == 0):
+            logger.info(u"(Ommiting: ({0},{1})".format(s,t))
+            continue
+        elif (s.lower() == t.lower()):
+            logger.info(u"(Half-Counting: ({0},{1})".format(s,t))
+            continue
+        else:
+            logger.info(u"\n({0},{1})".format(s,t))
+
+            # record the TP pair
+            all_labeled_twt2inst_fullname[s] = t
+
+
+    pickle.dump(all_labeled_twt2inst_fullname,open(fnameout,"wb"))
+
+
+    sys.exit()
     #
     # Filter some TP scores...
     #

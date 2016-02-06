@@ -92,8 +92,11 @@ class Softtfidf:
         Compute V(w,S) as defined by Cohen et al.'s IJCAI03 paper
         '''
         # Get term-frequency vectors and vocab list for string
-        cv = CountVectorizer(min_df = 0.0)
-        tf = cv.fit_transform([s,s]); tf = tf.tocsr(); tf = tf[0,:]
+        #cv = CountVectorizer(min_df = 0.0, token_pattern=)
+        #tf = cv.fit_transform([s,s]); tf = tf.tocsr(); tf = tf[0,:]
+        cv = CountVectorizer(min_df = 0.0, token_pattern=u'(?u)\\b\\w+\\b')
+        #self.logger.info(s)
+        tf = cv.fit_transform([s]); tf = tf.tocsr()
         vocab = cv.vocabulary_
 
         # Compute V(w,S) for string
@@ -123,8 +126,15 @@ class Softtfidf:
             self.compute_query_idf([s,t])
 
         # Get V(w,S) and V(w,T) (along with vocab lists for s and t) 
-        (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
-        (t_vocab,vprime_wt,vprime_wt_norm) = self.compute_VwS(t)
+        try: 
+            (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
+            (t_vocab,vprime_wt,vprime_wt_norm) = self.compute_VwS(t)
+        except ValueError:
+            self.logger.info("string got stop-listed; most likely b/c" , \
+                    "it is of length 1, with the only character being a ", \
+                    "non-normalized punctuation mark. (i.e. '.')")
+            sim = 0.0
+            return sim
 
         #compute D(w,T) for all w
         max_vT = dict()
@@ -147,10 +157,10 @@ class Softtfidf:
             for v in t_vocab:
                 if (jw_sims[w][v] >= self.THRESHOLD):
                     inner_sum = (vprime_ws[w]/vprime_ws_norm)*(vprime_wt[max_vT[w]['max_v']]/vprime_wt_norm)*max_vT[w]['score']
-                    self.logger.debug("(w,vprime_ws[w],vprime_ws_norm): ({0},{1},{2})".format(w,vprime_ws[w],vprime_ws_norm))
-                    self.logger.debug("(max_vT[w]['max_v'],vprime_wt[max_vT['max_v'],vprime_wt_norm): ({0},{1},{2})".format(max_vT[w]['max_v'],vprime_wt[max_vT[w]['max_v']],vprime_wt_norm))
-                    self.logger.debug("(max_vT[w]['score']): ({0})".format(max_vT[w]['score']))
-                    self.logger.debug("(w,v,inner_sum): ({0},{1},{2})".format(w,v,inner_sum))
+                    self.logger.debug(u"(w,vprime_ws[w],vprime_ws_norm): ({0},{1},{2})".format(w,vprime_ws[w],vprime_ws_norm))
+                    self.logger.debug(u"(max_vT[w]['max_v'],vprime_wt[max_vT['max_v'],vprime_wt_norm): ({0},{1},{2})".format(max_vT[w]['max_v'],vprime_wt[max_vT[w]['max_v']],vprime_wt_norm))
+                    self.logger.debug(u"(max_vT[w]['score']): ({0})".format(max_vT[w]['score']))
+                    self.logger.debug(u"(w,v,inner_sum): ({0},{1},{2})".format(w,v,inner_sum))
                     sim += inner_sum
                     break
 

@@ -48,6 +48,25 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
         self.update_utf8_rewrite_hash()
 
 
+    def normalize(self,ln):
+        #self.logger.info(u"before "+ln)
+        ln = MITLLTextNormalizer.normalize(self,ln)
+        #self.logger.info(u"after base class "+ln)
+        # Various normalization routines -- pick and choose as needed
+        #ln = self.normalize_unicode_composed(ln) #from base-class
+        #ln = self.filter_unicode(ln) #from base-class (w/ updated hash table)
+        #ln = self.remove_html_markup(ln) #from base class
+        ln = self.convertUTF8_to_ascii(ln)
+        ln = self.remove_twitter_meta(ln)
+        ln = self.remove_nonsentential_punctuation(ln)
+        ln = self.remove_word_punctuation(ln)
+        ln = self.remove_repeats(ln)
+        if (ln == ' '):
+            ln = ''
+        #self.logger.info(u"after latin class "+ln)
+        return ln
+
+
     def get_counts (self,msg):
         counts = {}
         for sent in msg:
@@ -83,20 +102,6 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
             if (s!=""):
                 fout.append(s)
         return fout
-
-
-    def normalize(self,ln):
-        # Various normalization routines -- pick and choose as needed
-        ln = self.normalize_unicode_composed(ln) #from base-class
-        ln = self.convertUTF8_to_ascii(ln)
-        ln = self.remove_twitter_meta(ln)
-        ln = self.remove_nonsentential_punctuation(ln)
-        ln = self.remove_html_markup(ln)
-        ln = self.remove_word_punctuation(ln)  # this is done separately in the original code
-        ln = self.remove_repeats(ln)
-        if (ln == ' '):
-            ln = ''
-        return ln
 
 
     def convertUTF8_to_ascii(self,ln):
@@ -458,7 +463,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def remove_nonsentential_punctuation (self,ln):
-        # Adapted from TJs normalization code
+        # Remove non-sentential punctuation
 
         # remove '-'
         ln = re.sub('^\-+', '', ln)
