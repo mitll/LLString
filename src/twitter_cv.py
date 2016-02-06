@@ -222,7 +222,6 @@ if __name__ == "__main__":
     pickle.dump([labeled_twt2inst_fullname,labeled_twt2inst_fullname_scores],open(fnameout,"wb"))
 
 
-
     ## make directories if they don't exist
     #if (not os.path.exists(corpus_outdir)): os.makedirs(corpus_outdir)
     #if (not os.path.exists(results_outdir)): os.makedirs(results_outdir)
