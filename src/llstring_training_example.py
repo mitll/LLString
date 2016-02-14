@@ -38,10 +38,11 @@ import gzip
 from llstring.utilities.normalization import latin_normalization
 from llstring.utilities.sampling import reservoir_sampler
 from llstring.training import idf_trainer
-from llstring.mitll_string_matcher_sklearn import MITLLStringMatcherSklearn
+from llstring.mitll_string_matcher import MITLLStringMatcher
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn import cross_validation 
+from sklearn.grid_search import GridSearchCV
 
 #
 # Logging
@@ -246,7 +247,7 @@ if __name__ == "__main__":
         #X = vec.fit_transform(pairs)
         #X_feat_index = vec.get_feature_names()
 
-        #matcher = MITLLStringMatcherSklearn(algorithm='jw',X_feat_index=X_feat_index)
+        #matcher = MITLLStringMatcher(algorithm='jw',X_feat_index=X_feat_index)
         #matcher.fit(X,np.asarray(y)); #make non-verbose
 
 
@@ -301,61 +302,92 @@ if __name__ == "__main__":
         fo.close()
 
 
-        # Cross-Validation
-        X_train, X_test, y_train, y_test = cross_validation.train_test_split(training_list,y,test_size=0.7,random_state=0)
-        idf_model = pickle.load(open(os.path.join(projectdir,"data/output/models/english_socialmedia_idf.model"),'rb'))
-        matcher_stf = MITLLStringMatcherSklearn(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin') #using default stf_thresh (0.6)
-        matcher_stf.fit(X_train,y_train)
-        logger.info(matcher_stf.predict_proba(X_test))
-        logger.info(matcher_stf.score(X_test,y_test))
-
-        sys.exit()
+        # Train/Test Splits
+        X_train, X_test, y_train, y_test = cross_validation.train_test_split(training_list,y,test_size=0.3,random_state=0)
 
         #Levenshtein
-        matcher_lev = MITLLStringMatcherSklearn(algorithm='lev',text_normalizer = 'latin')
-        matcher_lev.fit(training_list,y);
+        matcher_lev = MITLLStringMatcher(algorithm='lev',text_normalizer = 'latin')
+        matcher_lev.fit(X_train,y_train);
         matcher_lev.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_lev.model"))
-        levout1 = matcher_lev.predict_proba(training_list) #test on train!
+        levout1 = matcher_lev.predict_proba(X_test)
 
-        matcher_lev2 = MITLLStringMatcherSklearn(algorithm='lev',text_normalizer = 'latin')
+        matcher_lev2 = MITLLStringMatcher(algorithm='lev',text_normalizer = 'latin')
         matcher_lev2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_lev.model"))
-        levout2 = matcher_lev2.predict_proba(training_list) #test on train!
+        levout2 = matcher_lev2.predict_proba(X_test)
 
         if (levout1 == levout2).all(): logger.info("Levenshtein Test: Pass")
         else: logger.info("Levenshtein Test: Fail")
 
         #Jaro-Winkler
-        matcher_jw = MITLLStringMatcherSklearn(algorithm='jw',text_normalizer = 'latin')
-        matcher_jw.fit(training_list,y)
+        matcher_jw = MITLLStringMatcher(algorithm='jw',text_normalizer = 'latin')
+        matcher_jw.fit(X_train,y_train)
         matcher_jw.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_jw.model"))
-        jwout1 = matcher_jw.predict_proba(training_list)  #test on train!
+        jwout1 = matcher_jw.predict_proba(X_test)
 
-        matcher_jw2 = MITLLStringMatcherSklearn(algorithm='jw',text_normalizer = 'latin')
+        matcher_jw2 = MITLLStringMatcher(algorithm='jw',text_normalizer = 'latin')
         matcher_jw2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_jw.model"))
-        jwout2 = matcher_jw2.predict_proba(training_list)  #test on train!
+        jwout2 = matcher_jw2.predict_proba(X_test)
 
         if (jwout1 == jwout2).all(): logger.info("Jaro-Winkler Test: Pass")
         else: logger.info("Jaro-Winkler Test: Fail")
 
         #Soft TF-IDF
         idf_model = pickle.load(open(os.path.join(projectdir,"data/output/models/english_socialmedia_idf.model"),'rb'))
-        matcher_stf = MITLLStringMatcherSklearn(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin') #using default stf_thresh (0.6)
-        matcher_stf.fit(training_list,y)
+        matcher_stf = MITLLStringMatcher(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin') #use default stf_thresh=0.6
+        matcher_stf.fit(X_train,y_train)
         matcher_stf.save_model(os.path.join(projectdir,"data/output/models/english_socialmedia_stf.model"))
-        stfout1 = matcher_stf.predict_proba(training_list) #test on train!
+        stfout1 = matcher_stf.predict_proba(X_test)
 
-        matcher_stf2 = MITLLStringMatcherSklearn(algorithm='stf',text_normalizer = 'latin')
+        matcher_stf2 = MITLLStringMatcher(algorithm='stf',text_normalizer = 'latin')
         matcher_stf2.load_model(os.path.join(projectdir,"data/output/models/english_socialmedia_stf.model"))
-        stfout2 = matcher_stf2.predict_proba(training_list) #test on train!
+        stfout2 = matcher_stf2.predict_proba(X_test)
 
         if (stfout1 == stfout2).all(): logger.info("Soft TF-IDF Test: Pass")
         else: logger.info("Soft TF-IDF Test: Fail")
 
+        logger.info(matcher_lev.score(X_test,y_test))
+        logger.info(matcher_jw.score(X_test,y_test))
+        logger.info(matcher_stf.score(X_test,y_test))
 
+        #
+        # Grid-Search Example
+        #
+        matcher_stf = MITLLStringMatcher(algorithm='stf',idf_model=idf_model,text_normalizer = 'latin')
+        param_grid = {'stf_thresh':[0.75,0.8,0.825]}
+        clf = GridSearchCV(matcher_stf,param_grid,cv=5,verbose=2)
+        clf.fit(X_train,y_train)
+        for params, mean_score, scores in clf.grid_scores_:
+            print mean_score
+
+        logger.info(clf.score(X_test,y_test))
+
+
+        #
+        # Detailed Look
+        # 
+        logger.info("TRUE POSITIVE TRIALS")
+        tp = np.nonzero(np.asarray(y_test) == 1); tp = tp[0]
+        for ind in tp:
+            s = X_test[ind][0]; t = X_test[ind][1]
+            lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
+            jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
+            stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
+            logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
+
+        logger.info("TRUE NEGATIVE TRIALS")
+        tn = np.nonzero(np.asarray(y_test) == 0); tn = tn[0]
+        for ind in tn:
+            s = X_test[ind][0]; t = X_test[ind][1]
+            lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
+            jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
+            stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
+            logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
+        
+        # django reinhart
+        # tbone walker
 
         # OUTSTANDING:
-        #[] do the cross-validation to choose hyperparamters for STFIDF
-        #[] Just make one matcher class (i.e. remove sklearn)
+        #[] move a bunch of this sample code to "examples" directory 
 
         # COMPLETE:
         #[x] change LR parameters to tack closer to zero and one; balanced targets
@@ -373,6 +405,11 @@ if __name__ == "__main__":
         #[x] raise ValueError for strings that are all stop-list words 
         #[x] load-in the actual data (including negative pairs, which you have to write the code for)
             #[x] code to randomly sample negative pairs
+        #[x] Just make one matcher class
+        #[x] add unicode() before scoring (in get_raw_similarity())
+        #[x] do the cross-validation to choose hyperparamters for STFIDF
+        #   [x] fix init() so it works with grid search (re-factor self.hyparams)
+        #[x] remove "sklearn" from matcher class name, etc.
 
         # MAYBE: 
         #[] sklearn class: function to load idf model from fname
