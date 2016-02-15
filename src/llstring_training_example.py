@@ -365,29 +365,38 @@ if __name__ == "__main__":
         #
         # Detailed Look
         # 
-        logger.info("TRUE POSITIVE TRIALS")
-        tp = np.nonzero(np.asarray(y_test) == 1); tp = tp[0]
-        for ind in tp:
-            s = X_test[ind][0]; t = X_test[ind][1]
-            lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
-            jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
-            stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
-            logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
+        #logger.info("TRUE POSITIVE TRIALS")
+        #tp = np.nonzero(np.asarray(y_test) == 1); tp = tp[0]
+        #for ind in tp:
+        #    s = X_test[ind][0]; t = X_test[ind][1]
+        #    lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
+        #    jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
+        #    stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
+        #    logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
 
-        logger.info("TRUE NEGATIVE TRIALS")
-        tn = np.nonzero(np.asarray(y_test) == 0); tn = tn[0]
-        for ind in tn:
-            s = X_test[ind][0]; t = X_test[ind][1]
-            lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
-            jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
-            stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
-            logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
+        #logger.info("TRUE NEGATIVE TRIALS")
+        #tn = np.nonzero(np.asarray(y_test) == 0); tn = tn[0]
+        #for ind in tn:
+        #    s = X_test[ind][0]; t = X_test[ind][1]
+        #    lev_score = matcher_lev.predict_proba([(s,t)])[0][1]
+        #    jw_score = matcher_jw.predict_proba([(s,t)])[0][1]
+        #    stf_score = matcher_stf.predict_proba([(s,t)])[0][1]
+        #    logger.info(u"{0},{1},{2}\t({3},{4})".format(lev_score,jw_score,stf_score,s,t))
         
         # django reinhart
         # tbone walker
 
         # OUTSTANDING:
         #[] move a bunch of this sample code to "examples" directory 
+        #[] sklearn class: function to load idf model from fname
+            #[] also IDF train or load-in for stfidf
+        #[] basic packaging:
+            #[] tests?
+            #[] pip and easy_install? 
+
+        # MAYBE: 
+        #[] Train arabic name match models to release only to XDATA community
+        #[] Lin's paired data? 
 
         # COMPLETE:
         #[x] change LR parameters to tack closer to zero and one; balanced targets
@@ -410,12 +419,6 @@ if __name__ == "__main__":
         #[x] do the cross-validation to choose hyperparamters for STFIDF
         #   [x] fix init() so it works with grid search (re-factor self.hyparams)
         #[x] remove "sklearn" from matcher class name, etc.
-
-        # MAYBE: 
-        #[] sklearn class: function to load idf model from fname
-        #[] also IDF train or load-in for stfidf
-        #[] Train arabic name match models to release only to XDATA community
-        #[] Lin's paired data? 
 
 
 
