@@ -38,7 +38,7 @@ import gzip
 from llstring.utilities.normalization import latin_normalization
 from llstring.utilities.sampling import reservoir_sampler
 from llstring.training import idf_trainer
-from llstring.mitll_string_matcher import MITLLStringMatcher
+from llstring.matching.mitll_string_matcher import MITLLStringMatcher
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn import cross_validation 

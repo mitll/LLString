@@ -40,11 +40,9 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.linear_model import LogisticRegression as LR
 
 from .softtfidf import Softtfidf
-#from .mitll_string_matcher import MITLLStringMatcher
-from .utilities import normalization as normutils
+from ..utilities import normalization as normutils
 
 
-#class MITLLStringMatcherSklearn(MITLLStringMatcher,BaseEstimator,ClassifierMixin):
 class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
     """
     MIT-LL String Matcher as Sklearn Estimator:

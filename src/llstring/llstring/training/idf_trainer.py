@@ -93,9 +93,8 @@ class IDFTrainer:
 
 
     def save_model(self,fnameout):
-        '''
+        """
         Save-out learned IDF dictionary and associated metadata (e.g. self.IDF_MODEL)
-        '''
+        """
         self.logger.info("saving IDF model to {0}".format(fnameout))
         pickle.dump(self.IDF_MODEL,open(fnameout,"wb"))
-
