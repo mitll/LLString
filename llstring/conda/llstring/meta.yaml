@@ -1,0 +1,34 @@
+package:
+    name: llstring
+    version: "0.0.1"
+
+source:
+    #git_rev: v0.0.1
+    #git_url: https://g62code.llan.ll.mit.edu/cdagli/mitll-string-match.git
+    path: ../..
+
+build:
+
+requirements:
+    build:
+        - python
+        - setuptools
+    run:
+        - python
+        - numpy
+        - scikit-learn
+        - jellyfish 
+
+test:
+    imports:
+        - llstring
+        - llstring.matching
+        - llstring.training
+        - llstring.utilities
+        - llstring.utilities.sampling
+        - llstring.utilities.normalization
+
+about:
+    home: https://g62code.llan.ll.mit.edu/cdagli/mitll-string-match
+    license: APLv2
+

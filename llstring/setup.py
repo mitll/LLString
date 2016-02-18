@@ -25,59 +25,69 @@
 #
 # Imports 
 #
-from setuptools import setup
+from setuptools import setup, find_packages
 
 #
 # Head-off numpy/scipy install issues
 #
-np_check = True; sp_check = True
+if False:
+    np_check = True; sp_check = True
 
-try: import numpy
-except ImportError: np_check = False
+    try: import numpy
+    except ImportError: np_check = False
 
-try: import scipy
-except ImportError: sp_check = False
+    try: import scipy
+    except ImportError: sp_check = False
 
-if (not np_check) or (not sp_check):
-    msg =  "llstring requires numpy and scipy dependencies to be pre-installed on " \
-           "the host environment before installation. This is because optimized " \
-           "installations of numpy and scipy depend on non-python system build " \
-           "dependencies (i.e. gcc, gfortran, BLAS & LAPACK headers) which make " \
-           "building numpy and scipy from source with python's setuptools " \
-           "un-tractable. (This is a known python issue.) We recommend either " \
-           "pre-installation system-wide or in a python environment manager such " \
-           "as Anaconda.\n"
-           #"dependencies (i.e. gcc, gfortran, BLAS & LAPACK headers) which make " \ 
+    if (not np_check) or (not sp_check):
+        msg =  "llstring requires numpy and scipy dependencies to be pre-installed on " \
+               "the host environment before installation. This is because optimized " \
+               "installations of numpy and scipy depend on non-python system build " \
+               "dependencies (i.e. gcc, gfortran, BLAS & LAPACK headers) which make " \
+               "building numpy and scipy from source with python's setuptools " \
+               "un-tractable. (This is a known python issue.) We recommend either " \
+               "pre-installation system-wide or in a python environment manager such " \
+               "as Anaconda.\n"
+               #"dependencies (i.e. gcc, gfortran, BLAS & LAPACK headers) which make " \ 
 
-    if np_check: tag = "(numpy: Installed, "
-    else: tag = "(numpy: Not-Installed, "
+        if np_check: tag = "(numpy: Installed, "
+        else: tag = "(numpy: Not-Installed, "
 
-    if sp_check: tag += " scipy: Installed)"
-    else: tag += " scipy: Not-Installed)"
+        if sp_check: tag += " scipy: Installed)"
+        else: tag += " scipy: Not-Installed)"
 
-    msg += tag
+        msg += tag
 
-    raise ImportError(msg)
+        raise ImportError(msg)
 
 
 #
 # Do Setup
 #
 setup(name='llstring',
-      version='0.1',
+      version='0.0.1',
       description='MIT-LL String Processing and Matching Tools',
       url='https://g62code.llan.ll.mit.edu/cdagli/mitll-string-match',
       author='Charlie Dagli',
       author_email='dagli@ll.mit.edu',
       license='APLv2',
-      packages=['llstring'],
-      install_requires=[
-          'jellyfish',
-          'sklearn', #sklearn depends on both numpy and scipy packages.
-                     #numpy and scipy are not included in this list b/c
-                     #doing so would build numpy and scipy from source
-                     #and depending on your setup could result in a really
-                     #non-optimized set of linear algebra libraries for
-                     #your particular system. 
-      ],
-      zip_safe=False)
+      packages=find_packages())
+#setup(name='llstring',
+#      version='0.1',
+#      description='MIT-LL String Processing and Matching Tools',
+#      url='https://g62code.llan.ll.mit.edu/cdagli/mitll-string-match',
+#      author='Charlie Dagli',
+#      author_email='dagli@ll.mit.edu',
+#      license='APLv2',
+#      packages=['llstring'],
+#      install_requires=[
+#          'jellyfish',
+#          'sklearn', #sklearn depends on both numpy and scipy packages.
+#                     #numpy and scipy are not included in this list b/c
+#                     #doing so would build numpy and scipy from source
+#                     #and depending on your setup could result in a really
+#                     #non-optimized set of linear algebra libraries for
+#                     #your particular system. 
+#      ],
+#      zip_safe=False)
+
