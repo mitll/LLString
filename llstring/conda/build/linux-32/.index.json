@@ -1,0 +1,39 @@
+{
+  "jellyfish-0.5.2-py27_0.tar.bz2": {
+    "arch": "x86", 
+    "build": "py27_0", 
+    "build_number": 0, 
+    "depends": [
+      "python 2.7*"
+    ], 
+    "license": "BSD License", 
+    "md5": "1d62c4f20683006999ee3b78e8547b05", 
+    "mtime": 1455872127.8810356, 
+    "name": "jellyfish", 
+    "platform": "linux", 
+    "sig": null, 
+    "size": 68429, 
+    "subdir": "linux-32", 
+    "version": "0.5.2"
+  }, 
+  "llstring-0.0.1-py27_0.tar.bz2": {
+    "arch": "x86", 
+    "build": "py27_0", 
+    "build_number": 0, 
+    "depends": [
+      "jellyfish", 
+      "numpy", 
+      "python 2.7*", 
+      "scikit-learn"
+    ], 
+    "license": "APLv2", 
+    "md5": "b724f9759fdc538e2472de21df39989b", 
+    "mtime": 1455872069.3890352, 
+    "name": "llstring", 
+    "platform": "linux", 
+    "sig": null, 
+    "size": 23794, 
+    "subdir": "linux-32", 
+    "version": "0.0.1"
+  }
+}

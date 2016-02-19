@@ -5,7 +5,7 @@ package:
 source:
     #git_rev: v0.0.1
     #git_url: https://g62code.llan.ll.mit.edu/cdagli/mitll-string-match.git
-    path: ../..
+    path: ../../..
 
 build:
 

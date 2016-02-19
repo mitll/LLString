@@ -48,7 +48,6 @@ if False:
                "un-tractable. (This is a known python issue.) We recommend either " \
                "pre-installation system-wide or in a python environment manager such " \
                "as Anaconda.\n"
-               #"dependencies (i.e. gcc, gfortran, BLAS & LAPACK headers) which make " \ 
 
         if np_check: tag = "(numpy: Installed, "
         else: tag = "(numpy: Not-Installed, "
