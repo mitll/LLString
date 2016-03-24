@@ -47,7 +47,7 @@ class Softtfidf:
     """
 
     # Logging
-    LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.INFO
     logging.basicConfig(level=LOG_LEVEL,
                                 format='%(asctime)s %(levelname)-8s %(message)s',
                                                     datefmt='%a, %d %b %Y %H:%M:%S')
