@@ -4,7 +4,7 @@
 #
 # Class to learn IDF weighting from training data
 # 
-# Copyright 2015 Massachusetts Institute of Technology, Lincoln Laboratory
+# Copyright 2015-2016 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
 # author: Charlie K. Dagli
@@ -31,9 +31,7 @@ from  sklearn.feature_extraction.text import TfidfTransformer
 
 
 class IDFTrainer:
-    '''
-    Class to learn IDF weighting from training data
-    '''
+    """ Class to learn IDF weighting from training data """
 
     # Logging
     LOG_LEVEL = logging.INFO
@@ -44,9 +42,7 @@ class IDFTrainer:
     
 
     def __init__(self,min_df=2,norm="l2"):
-        '''
-        Constructor
-        '''
+        """ Constructor """
         self.cv = CountVectorizer(min_df=min_df)
         self.tfidf = TfidfTransformer(norm)
 
@@ -58,13 +54,13 @@ class IDFTrainer:
 
 
     def compute_idf(self,corpus):
-        '''
+        """
         Compute IDF using corpus.
         Per sklearn conventions, "corpus" can be either a:
             file: a file object for a file containing content (newline separated) 
             content: a iterable containing all the data in memory (i.e. a list)
             filename: list of filenames of documents in which content is contained
-        '''
+        """
         self.cv.fit_transform(corpus)
         self.logger.debug(self.cv.vocabulary_)
         self.CORPUS_VOCAB = self.cv.vocabulary_
@@ -93,8 +89,7 @@ class IDFTrainer:
 
 
     def save_model(self,fnameout):
-        """
-        Save-out learned IDF dictionary and associated metadata (e.g. self.IDF_MODEL)
-        """
+        """ Save-out learned IDF dictionary and associated metadata (e.g. self.IDF_MODEL) """
         self.logger.info("saving IDF model to {0}".format(fnameout))
         pickle.dump(self.IDF_MODEL,open(fnameout,"wb"))
+

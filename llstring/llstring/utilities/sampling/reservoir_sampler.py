@@ -4,7 +4,7 @@
 #
 # Perform uniform sampling from an (possibly infinite) input stream
 # 
-# Copyright 2015 Massachusetts Institute of Technology, Lincoln Laboratory
+# Copyright 2015-2016 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
 # author: Charlie K. Dagli
@@ -26,9 +26,7 @@ import random
 import logging
 
 class ReservoirSampler: 
-    '''
-    Class to perform uniform sampling from an input stream
-    '''
+    """ Class to perform uniform sampling from an input stream """
 
     # Logging
     LOG_LEVEL = logging.INFO
@@ -39,18 +37,14 @@ class ReservoirSampler:
     
 
     def __init__(self,K):
-        '''
-        Constructor
-        '''
+        """ Constructor """
         self.K = K
         self.N = 0
         self.sample = list()
 
 
     def update_sample(self,item):
-        '''
-        Update sampler
-        '''
+        """ Update sampler """
         self.N += 1
         
         if len(self.sample) < self.K:
@@ -62,8 +56,6 @@ class ReservoirSampler:
 
 
     def get_sample(self):
-        '''
-        Return sample
-        '''
+        """ Return sample """
         return self.sample
 

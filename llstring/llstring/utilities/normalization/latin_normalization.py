@@ -4,7 +4,7 @@
 #
 # Text Normalization Routines for Latin Script Text (including for Twitter data)
 # 
-# Copyright 2013-2015 Massachusetts Institute of Technology, Lincoln Laboratory
+# Copyright 2013-2016 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
 # author: William M. Campbell and Charlie Dagli
@@ -28,9 +28,9 @@ import logging
 from .text_normalization import MITLLTextNormalizer
 
 class MITLLLatinNormalizer(MITLLTextNormalizer): 
-    '''
+    """
     Text-Normalization Routines for Latin Script Text
-    '''
+    """
 
     # Logging
     LOG_LEVEL = logging.INFO
@@ -41,21 +41,14 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
     
 
     def __init__(self):
-        '''
-        Constructor
-        '''
+        """ Constructor """
         MITLLTextNormalizer.__init__(self)
         self.update_utf8_rewrite_hash()
 
 
     def normalize(self,ln):
-        #self.logger.info(u"before "+ln)
+        """ Normalize text """
         ln = MITLLTextNormalizer.normalize(self,ln)
-        #self.logger.info(u"after base class "+ln)
-        # Various normalization routines -- pick and choose as needed
-        #ln = self.normalize_unicode_composed(ln) #from base-class
-        #ln = self.filter_unicode(ln) #from base-class (w/ updated hash table)
-        #ln = self.remove_html_markup(ln) #from base class
         ln = self.convertUTF8_to_ascii(ln)
         ln = self.remove_twitter_meta(ln)
         ln = self.remove_nonsentential_punctuation(ln)
@@ -63,11 +56,11 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
         ln = self.remove_repeats(ln)
         if (ln == ' '):
             ln = ''
-        #self.logger.info(u"after latin class "+ln)
         return ln
 
 
     def get_counts (self,msg):
+        """ Word Count """
         counts = {}
         for sent in msg:
             f = sent.split(' ')
@@ -79,6 +72,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def remove_repeats (self,msg):
+        """ Remove Repeats """
         # twitter specific repeats
         msg = re.sub(r"(.)\1{2,}", r"\1\1\1", msg)  # characters repeated 3 or more times
 
@@ -91,6 +85,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def splitter(self,ln):
+        """ Line Splitter """
         # horridly simple splitter
         ln = ln.replace(". ", ".\n\n").replace("? ","?\n\n").replace("! ","!\n\n")
         ln = ln.replace('."', '."\n\n')
@@ -105,6 +100,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def convertUTF8_to_ascii(self,ln):
+        """ UTF8 to ASCII Converter """
         out = ''
         for i in xrange(0,len(ln)):
             if (ord(ln[i]) < 0x7f):
@@ -126,6 +122,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def update_utf8_rewrite_hash (self):
+        """ Rewrite Hash """
         # Strictly speaking (and in python) any ascii character >= 128 is not valid
         # This tries to rewrite utf-8 chars to ascii in a rational manner
 
@@ -432,6 +429,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def remove_word_punctuation (self,ln):
+        """ Punctuation Remover """
         ln = re.sub("^(\S+)[\.\!\?]", "\g<1>", ln)
         ln = re.sub("\s(\S+)[\.\!\?]", " \g<1>", ln)
         ln = re.sub("(\S+)[\.\!\?]$", "\g<1>", ln)
@@ -447,6 +445,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def remove_twitter_meta (self,ln):
+        """ Twitter Metadata Remover """
         # ln = re.sub(r'\#\S+', ' ', ln) # remove hashtags --old version
         # ln = re.sub(r'\@\S+', ' ', ln) # remove @tags -- old version
 
@@ -463,7 +462,7 @@ class MITLLLatinNormalizer(MITLLTextNormalizer):
 
 
     def remove_nonsentential_punctuation (self,ln):
-        # Remove non-sentential punctuation
+        """ Remove non-sentential punctuation """
 
         # remove '-'
         ln = re.sub('^\-+', '', ln)

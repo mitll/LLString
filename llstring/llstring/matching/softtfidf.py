@@ -4,7 +4,7 @@
 #
 # Soft TF-IDF String Comparison Algorithm
 # 
-# Copyright 2015 Massachusetts Institute of Technology, Lincoln Laboratory
+# Copyright 2015-2016 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
 # author: Charlie Dagli
@@ -27,14 +27,11 @@
 
 
 #Imports
-import os
-from collections import namedtuple
 import logging
 import math
 
 from  sklearn.feature_extraction.text import CountVectorizer
 from  sklearn.feature_extraction.text import TfidfTransformer
-from  sklearn.feature_extraction.text import TfidfVectorizer
 
 import jellyfish as jf
 
@@ -55,9 +52,7 @@ class Softtfidf:
 
 
     def __init__(self,threshold=0.6, idf_model=None):
-        '''
-        Constructor 
-        '''
+        """ Constructor """
         self.THRESHOLD = threshold
 
         if idf_model == None:
@@ -71,9 +66,7 @@ class Softtfidf:
 
 
     def set_model(self,idf_model):
-        '''
-        Set softtfidf matcher's model parameters
-        '''
+        """ Set softtfidf matcher's model parameters """
         # Set (or compute) IDF and corresponding vocabulary
         self.LOG_IDF = idf_model['idf']
         self.CORPUS_VOCAB = idf_model['corpus_vocab']
@@ -81,21 +74,14 @@ class Softtfidf:
 
 
     def set_threshold(self,threshold=0.6):
-        '''
-        Set threshold
-        '''
+        """ Set threshold """
         self.THRESHOLD = threshold
 
 
     def compute_VwS(self,s):
-        '''
-        Compute V(w,S) as defined by Cohen et al.'s IJCAI03 paper
-        '''
+        """ Compute V(w,S) as defined by Cohen et al.'s IJCAI03 paper """
         # Get term-frequency vectors and vocab list for string
-        #cv = CountVectorizer(min_df = 0.0, token_pattern=)
-        #tf = cv.fit_transform([s,s]); tf = tf.tocsr(); tf = tf[0,:]
         cv = CountVectorizer(min_df = 0.0, token_pattern=u'(?u)\\b\\w+\\b')
-        #self.logger.info(s)
         tf = cv.fit_transform([s]); tf = tf.tocsr()
         vocab = cv.vocabulary_
 
@@ -114,9 +100,7 @@ class Softtfidf:
 
 
     def score(self,s,t):
-        '''
-        Returns the soft tf-idf similarity
-        '''
+        """ Returns the soft tf-idf similarity """
 
         # Check to see whether a model exists; otherwise default to degenerate solution
         if (self.LOG_IDF is None) | (self.CORPUS_VOCAB is None) | (self.OOV_IDF_VAL is None):
@@ -130,8 +114,8 @@ class Softtfidf:
             (s_vocab,vprime_ws,vprime_ws_norm) = self.compute_VwS(s)
             (t_vocab,vprime_wt,vprime_wt_norm) = self.compute_VwS(t)
         except ValueError:
-            self.logger.info("string got stop-listed; most likely b/c" , \
-                    "it is of length 1, with the only character being a ", \
+            self.logger.info("string got stop-listed; most likely b/c " \
+                    "it is of length 1, with the only character being a " \
                     "non-normalized punctuation mark. (i.e. '.')")
             sim = 0.0
             return sim
@@ -170,9 +154,7 @@ class Softtfidf:
 
 
     def compute_query_idf(self,corpus):
-        '''
-        Compute IDF from s and t in case you have no externally computed IDF to use 
-        '''
+        """ Compute IDF from s and t in case you have no externally computed IDF to use """
         cv = CountVectorizer(min_df = 0.0)
         cv.fit_transform(corpus)
         self.logger.debug(cv.vocabulary_)

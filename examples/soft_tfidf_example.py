@@ -24,18 +24,10 @@
 #
 # Imports 
 #
-import numpy as np
-import os,sys
+import os
 import logging
-import json
 import cPickle as pickle
 
-
-import gzip
-
-from llstring.utilities.normalization import latin_normalization
-from llstring.utilities.sampling import reservoir_sampler
-from llstring.training import idf_trainer
 from llstring.matching.mitll_string_matcher import MITLLStringMatcher
 
 from sklearn import cross_validation 

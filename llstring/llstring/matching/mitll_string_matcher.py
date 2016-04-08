@@ -28,16 +28,15 @@
 
 
 # Imports
-import os, logging
+import logging
 import numpy as np
 import cPickle as pickle
 
 import jellyfish
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils import check_array,column_or_1d
-from sklearn.utils.multiclass import check_classification_targets
 from sklearn.linear_model import LogisticRegression as LR
+from sklearn.metrics import roc_auc_score
 
 from .softtfidf import Softtfidf
 from ..utilities import normalization as normutils
@@ -62,28 +61,11 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
 
     def __init__(self,algorithm='jw', stf_thresh=0.6, idf_model=None, text_normalizer = None):
         """ Initialize dict containing hyperparameters """
-        #MITLLStringMatcher.__init__(self) #init base class members (i.e. normalizer)
-        
+
         self.algorithm = algorithm
         self.stf_thresh = stf_thresh
         self.idf_model = idf_model
         self.text_normalizer = text_normalizer
-
-        #self.hyparams = dict()
-        #self.hyparams['match_fcn'] = None
-        #self.hyparams['algo'] = self.algorithm
-        #self.hyparams['txt_normer'] = self.text_normalizer
-
-        #if algorithm == 'lev': #levenshtein
-        #    self.hyparams['match_fcn'] = self.levenshtein_similarity
-
-        #elif algorithm== 'jw': #jaro-winkler
-        #    self.hyparams['match_fcn'] = self.jaro_winkler_similarity
-
-        #elif algorithm== 'stf': #softtfidf
-        #    self.hyparams['match_fcn'] = self.soft_tfidf_similarity
-        #    self.hyparams['stf_thresh'] = self.stf_thresh
-        #    self.hyparams['idf_model'] = self.idf_model
 
 
     #
@@ -201,12 +183,8 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
 
         for i in xrange(len(X)):
             pair = X[i]
-            #self.logger.info(u"un-normalized pair:({0},{1})".format(pair[0],pair[1])) 
             s = unicode(self.normalizer.normalize(pair[0]),'utf-8')
             t = unicode(self.normalizer.normalize(pair[1]),'utf-8')
-            #self.logger.info(u"normalized pair:({0},{1})".format(s,t)) 
-            #self.logger.info("lengths: ({0},{1})".format(len(s),len(t)))
-            #self.logger.info(u"============================")
 
             if (len(s) > 0) and (len(t) > 0):
                 sim = self.hyparams['match_fcn'](s,t)
@@ -214,7 +192,6 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
             else:
                 similarities.append(0.0)
                 if y: y[i] = -1 #set y-value of non-conforming pair to -1
-                
 
         sims_array = np.asarray(similarities).reshape(-1,1)
         
@@ -222,25 +199,6 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
             return (sims_array,y)
         else:
             return sims_array
-
-
-    def get_raw_similarities_old(self, X):
-        """ Convert input to raw similarities """
-
-        similarities = list()
-
-        for pair in X:
-            #s = pair[0]; t = pair[1]
-            s = self.normalizer.normalize(pair[0])
-            t = self.normalizer.normalize(pair[1])
-
-            if (len(s) > 0) and (len(t) > 0):
-                sim = self.hyparams['match_fcn'](s,t)
-                similarities.append(sim)
-
-        sims_array = np.asarray(similarities).reshape(-1,1)
-        
-        return sims_array
 
 
     def save_model(self,fnameout):
@@ -277,59 +235,6 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
         self.init_algorithm() #validate hyparams (we assume object not fit when load_model called)
 
         return self
-
-
-    #def _validate_targets(self, y):
-    #    """ Validate class labels provided in y"""
-    #    y_ = column_or_1d(y, warn=True)
-    #    check_classification_targets(y)
-    #    cls, y = np.unique(y_, return_inverse=True)
-    #    if len(cls) < 2:
-    #        raise ValueError(
-    #            "The number of classes has to be at least 2; got %d"
-    #            % len(cls))
-
-    #    self.classes_ = cls
-
-    #    #return np.asarray(y, dtype=np.float64, order='C')
-    #    return y
-    #def set_X_feat_index(self,X_feat_index):
-    #    """ Set X_feat_index """
-    #    self.X_feat_index = X_feat_index
-
-
-    #def get_raw_similarities_matrix(self, X):
-    #    """ Convert input to raw similarities """
-
-    #    similarities = list()
-
-    #    for i in xrange(X.shape[0]):
-    #        # Re-construct strings from sparse input X
-    #        (junk,inds) = X[i][0].nonzero()
-
-    #        s = self.X_feat_index[inds[0]];s = s.split("=")[1]
-    #        t = self.X_feat_index[inds[1]];t = t.split("=")[1]
-
-    #        if self.algorithm == 'lev': #'lev':levenshtein
-    #            sim = self.levenshtein_similarity(s,t)
-    #            similarities.append(sim)
-
-    #        elif self.algorithm == 'jw': #'jw':jaro-winkler
-    #            sim = self.jaro_winkler_similarity(s,t)
-    #            similarities.append(sim)
-
-    #        elif self.algorithm == 'stf': #'stf':softtfidf
-    #            sim = self.soft_tfidf_similarity(s,t)
-    #            similarities.append(sim)
-
-    #        else:
-    #            raise ValueError("Algorithm has to be either 'lev','jw' or 'stf'")
-
-    #    s = np.asarray(similarities).reshape(-1,1)
-    #    
-    #    return s
-
-
 
 
     #
@@ -390,17 +295,6 @@ class MITLLStringMatcher(BaseEstimator,ClassifierMixin):
     # Evaluate
     #
     def score(self,X,y,sample_weight=None):
-        """ Score (may not need this) """
-        #s = self.get_raw_similarities(X)
-
-        #return self.lr_.score(s,y,sample_weight)
-        from sklearn.metrics import f1_score,log_loss,roc_auc_score,average_precision_score
-        return average_precision_score(y,self.predict(X),sample_weight=sample_weight)
-
-
-
-
-if __name__ == "__main__":
-
-    MITLLStringMatcher().main()
+        """ Score matcher """
+        return roc_auc_score(y,self.predict(X),sample_weight=sample_weight)
 

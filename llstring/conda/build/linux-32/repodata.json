@@ -25,10 +25,10 @@
         "scikit-learn"
       ],
       "license": "APLv2",
-      "md5": "b724f9759fdc538e2472de21df39989b",
+      "md5": "14413671692c83ff18741e9c833e2521",
       "name": "llstring",
       "sig": null,
-      "size": 23794,
+      "size": 23826,
       "subdir": "linux-32",
       "version": "0.0.1"
     }

@@ -8,7 +8,7 @@
     ], 
     "license": "BSD License", 
     "md5": "18307a30f218a175f54ae53c2bafd0a9", 
-    "mtime": 1455872128.0130355, 
+    "mtime": 1457541464.220712, 
     "name": "jellyfish", 
     "platform": "win", 
     "sig": null, 
@@ -27,12 +27,12 @@
       "scikit-learn"
     ], 
     "license": "APLv2", 
-    "md5": "05cdc5b371f88f28db50fcd2ecbe39f9", 
-    "mtime": 1455872069.5810354, 
+    "md5": "301ad64a59c8b116e3e95da675584b8d", 
+    "mtime": 1458856487.691586, 
     "name": "llstring", 
     "platform": "win", 
     "sig": null, 
-    "size": 23791, 
+    "size": 23799, 
     "subdir": "win-64", 
     "version": "0.0.1"
   }

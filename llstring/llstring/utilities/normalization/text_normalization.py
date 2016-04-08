@@ -4,7 +4,7 @@
 #
 # Generic Text Normalization Routines
 # 
-# Copyright 2013-2015 Massachusetts Institute of Technology, Lincoln Laboratory
+# Copyright 2013-2016 Massachusetts Institute of Technology, Lincoln Laboratory
 # version 0.1
 #
 # author: Charlie Dagli & William M. Cambpell
@@ -43,6 +43,7 @@ class MITLLTextNormalizer:
 
 
     def normalize(self,ln):
+        """ Text Line Normalizer """
         # Various normalization routines -- pick and choose as needed
         ln = unicode(ln) #make sure we're in unicode
         ln = self.normalize_unicode_composed(ln) #from base-class
@@ -64,6 +65,7 @@ class MITLLTextNormalizer:
 
 
     def filter_unicode(self,ln):
+        """ Filter Unicode """
         out = ''
         for i in xrange(0,len(ln)):
             if (ord(ln[i]) < 0x7f):
@@ -197,3 +199,4 @@ class MITLLTextNormalizer:
             ss = u''
 
         return ss
+
