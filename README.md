@@ -1,8 +1,6 @@
 # mitll-string-match
 
-This project contains the source for **llstring**, a soft string matching toolbox. 
-
-**llstring** provides:
+This project contains the source for **llstring**, a soft string matching toolbox.  **llstring** provides:
 * Basic Soft string matching via Levenshtein, Jaro-Winkler and Soft TF-IDF similarity scoring algorithms
 * Roll-Your-Own soft string matching functionality for new data domains:
     * Full cross-validation suite (including Platt Scaling) for building classifiers based on raw string matching scores
@@ -16,12 +14,12 @@ This project contains the source for **llstring**, a soft string matching toolbo
 This package is written in Python. For easiest installation, users are encouraged to use [Anaconda](https://www.continuum.io/why-anaconda), a lightweight package manager, environment manager and Python distribution. **llstring** is distributed with builds for multiple platforms and can be installed via:
 
 ```shell
-conda install -c file://path/to/llstring/conda/build llstring
+conda install -c file://local/path/to/llstring/conda/build llstring
 ```
 
 ### Running
 
-Example scripts highlighting **llstring** functionality can be found in the ```examples`` directory in the project root. This directory contains examples scripts and data for soft string matcher training, validation and testing on sample data. 
+Example scripts highlighting **llstring** functionality can be found in the ```examples``` directory in the project root. This directory contains examples scripts and data for soft string matcher training, validation and testing on sample data. 
 
 
 ### License
