@@ -1,38 +1,32 @@
 # mitll-string-match
 
-This project contains the source for basic string matching in support of XDATA. 
+This project contains the source for **llstring**, a soft string matching toolbox. 
 
-Basic String Matching Techniques:
-- Levenshtein Distance
-- Jaro-Winkler 
-- Soft TF-IDF
+**llstring** provides:
+* Basic Soft string matching via Levenshtein, Jaro-Winkler and Soft TF-IDF similarity scoring algorithms
+* Roll-Your-Own soft string matching functionality for new data domains:
+    * Full cross-validation suite (including Platt Scaling) for building classifiers based on raw string matching scores
+    * TF-IDF dictionary training
+    * Example models trained on English language social media data
+* Text Normalization Tools (i.e. UTF-8 encoding normalization, tweet-speak normalization, etc.)
 
-This repo is intended to hold source only. Any raw data (or derived data products) must be stored locally.
 
 ### Prerequisites and Installation
 
-This package requires both the jellyfish and sklearn pacakges which are both available via pip via: 
+This package is written in Python. For easiest installation, users are encouraged to use [Anaconda](https://www.continuum.io/why-anaconda), a lightweight package manager, environment manager and Python distribution. **llstring** is distributed with builds for multiple platforms and can be installed via:
 
 ```shell
-sudo pip install jellyfish
-sudo pip install sklearn
+conda install -c file://path/to/llstring/conda/build llstring
 ```
 
 ### Running
 
-The code to compute string match scores for an example string pair (i.e. `ALI SHAHEED MOHAMMED` and `ALI SAJID MUHAMMAD`) for each of the supported techniques is contained in the `main()` function of `mitll_string_match.py`. 
+Example scripts highlighting **llstring** functionality can be found in the ```examples`` directory in the project root. This directory contains examples scripts and data for soft string matcher training, validation and testing on sample data. 
 
-```shell
-./mitll_string_match.py
-Fri, 28 Aug 2015 10:05:55 INFO     Entity-Match Test:
-Fri, 28 Aug 2015 10:05:55 INFO     0.72619047619
-Fri, 28 Aug 2015 10:05:55 INFO     0.842063492063
-Fri, 28 Aug 2015 10:05:55 INFO     0.81094836358
-```
 
 ### License
 
-Copyright 2015 MIT Lincoln Laboratory, Massachusetts Institute of Technology 
+Copyright 2015-2016 MIT Lincoln Laboratory, Massachusetts Institute of Technology 
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files except in compliance with the License.
 
