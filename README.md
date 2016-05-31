@@ -1,4 +1,4 @@
-# mitll-string-match
+# LLString
 
 This project contains the source for **llstring**, a soft string matching toolbox.  **llstring** provides:
 * Basic Soft string matching via Levenshtein, Jaro-Winkler and Soft TF-IDF similarity scoring algorithms
