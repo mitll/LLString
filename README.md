@@ -8,11 +8,24 @@ This project contains the source for **llstring**, a soft string matching toolbo
     * Example models trained on English language social media data
 * Text Normalization Tools (i.e. UTF-8 encoding normalization, tweet-speak normalization, etc.)
 
+
+### Prerequisites and Installation
+
+This package is written in Python. For easiest installation, users are encouraged to use [Anaconda](https://www.continuum.io/why-anaconda), a lightweight package manager, environment manager and Python distribution. **llstring** is distributed with builds for multiple platforms and can be installed via:
+
+```shell
+conda install -c file://local/path/to/llstring/conda/build llstring
+```
+
+### Running
+
+Example scripts highlighting **llstring** functionality can be found in the ```examples``` directory in the project root. This directory contains examples scripts and data for soft string matcher training, validation and testing on sample data. 
+
 ### Tweet Normalization example
 
 ```
 515918-mitll:mitll-string-match go22670$ export PYTHONIOENCODING=utf-8
-515918-mitll:mitll-string-match go22670$ python norm.py twitterSample.tsv  > twitterSampleNormed.tsv
+515918-mitll:mitll-string-match go22670$ python examples/norm.py examples/data/twitterSample.tsv  > twitterSampleNormed.tsv
 ```
 
 which strips out @mentions, hash tags, urls, etc.
@@ -58,19 +71,6 @@ und	derbyshire 62/2 214 ov 267
 de	ich habe 71,530 goldmünzen gesammelt
 not_fi	oh myy 🙊
 ```
-
-### Prerequisites and Installation
-
-This package is written in Python. For easiest installation, users are encouraged to use [Anaconda](https://www.continuum.io/why-anaconda), a lightweight package manager, environment manager and Python distribution. **llstring** is distributed with builds for multiple platforms and can be installed via:
-
-```shell
-conda install -c file://local/path/to/llstring/conda/build llstring
-```
-
-### Running
-
-Example scripts highlighting **llstring** functionality can be found in the ```examples``` directory in the project root. This directory contains examples scripts and data for soft string matcher training, validation and testing on sample data. 
-
 
 ### License
 
