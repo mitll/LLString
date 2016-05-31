@@ -8,6 +8,56 @@ This project contains the source for **llstring**, a soft string matching toolbo
     * Example models trained on English language social media data
 * Text Normalization Tools (i.e. UTF-8 encoding normalization, tweet-speak normalization, etc.)
 
+### Tweet Normalization example
+
+```
+515918-mitll:mitll-string-match go22670$ export PYTHONIOENCODING=utf-8
+515918-mitll:mitll-string-match go22670$ python norm.py twitterSample.tsv  > twitterSampleNormed.tsv
+```
+
+which strips out @mentions, hash tags, urls, etc.
+
+e.g. original:
+
+```
+==> twitterSample.tsv <==
+pt	pensei que tinha perdido boina e caderno, mas na vdd, a gabriella que pegou, nojenta"
+und	@ZEECorporate     A3) 5 continents #ZEE"
+und	@eduarda_sam ui apxnd"
+ka	თელავი ჩოგბურთის საერთაშორისო ტურნირს მასპინძლობს: თელავში ქალთა და მამაკაცთა სერთაშორისო ტურნირი ჩოგბურთში “T... http://t.co/vzu6LgoLeH"
+km	អានេះទើបហៅថា មី ពិតប្រាកដព្រោះដុតមិនឆេះទេ ខុសពី មីយួន ដុតទៅឆេះរលួយដូច ជ័រកៅស៊ូ http://t.co/0HHJkFT1tD"
+sv	@lisaginell Jaa verkligen,världens bästa typ som små hundar :')"
+nl	Inpakken voor Rastede! :) Nu hoop ik eiglk dat alles in 1 weekendtas past..."
+da	@koefoed Der fik han lige 500 XP."
+fa	این بچه ها چه قدر تو وایبر گروه تشکیل میدن..یعنی همه جکان رو نمیتونن تو همون گروه کپی کنن؟:/"
+it	C'è un umidità assurda💧💧💧"
+pa	ਇਹ ਮੁਹੱਬਤ ਕਰਨ ਵਾਲੇ ਲੋਕ ਨਿਰੇ ਮੂਰਖ ਹੁੰਦੇ ਹਨ ਖ਼੍ਜ਼ਾਨੇ ਦੀ ਕੁੰਜੀ ਆਪੇ\nਹੀ ਕਿਸੇ ਬਿਹਾਨੇ ਨੂੰ ਸੌਂਪ ਦਿੰਦੇ ਹਨ,ਤੇ ਫ਼ੇਰ ਆਪ੍ਣੇ... http://t.co/PcfxbpfzxA"
+und	heol"
+und	Derbyshire 62/2 (21.4 ov) #cricket #fifa14 #FIFAWorldCup 267"
+de	Ich habe 71,530 Goldmünzen gesammelt! http://t.co/PwPNZDFUVy #android, #androidgames, #gameinsight"
+not_fi	@stevenlongo_33 oh myy 🙊"
+```
+
+to normalized:
+
+```
+==> twitterSampleNormed.tsv <==
+pt	pensei que tinha perdido boina e caderno mas na vdd a gabriella que pegou nojenta
+und	a3 5 continents
+und	ui apxnd
+ka	თელავი ჩოგბურთის საერთაშორისო ტურნირს მასპინძლობს თელავში ქალთა და მამაკაცთა სერთაშორისო ტურნირი ჩოგბურთში “t
+km	អានេះទើបហៅថា មី ពិតប្រាកដព្រោះដុតមិនឆេះទេ ខុសពី មីយួន ដុតទៅឆេះរលួយដូច ជ័រកៅស៊ូ
+sv	jaa verkligen världens bästa typ som små hundar :')
+nl	inpakken voor rastede :) nu hoop ik eiglk dat alles in 1 weekendtas past
+da	der fik han lige 500 xp
+fa	این بچه ها چه قدر تو وایبر گروه تشکیل میدنیعنی همه جکان رو نمیتونن تو همون گروه کپی کنن؟:/
+it	c'è un umidità assurda💧💧💧
+pa	ਇਹ ਮੁਹੱਬਤ ਕਰਨ ਵਾਲੇ ਲੋਕ ਨਿਰੇ ਮੂਰਖ ਹੁੰਦੇ ਹਨ ਖ਼੍ਜ਼ਾਨੇ ਦੀ ਕੁੰਜੀ ਆਪੇ nਹੀ ਕਿਸੇ ਬਿਹਾਨੇ ਨੂੰ ਸੌਂਪ ਦਿੰਦੇ ਹਨ,ਤੇ ਫ਼ੇਰ ਆਪ੍ਣੇ
+und	heol
+und	derbyshire 62/2 214 ov 267
+de	ich habe 71,530 goldmünzen gesammelt
+not_fi	oh myy 🙊
+```
 
 ### Prerequisites and Installation
 
